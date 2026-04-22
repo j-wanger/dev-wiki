@@ -179,7 +179,7 @@ Use journal frontmatter from Section J of dev-wiki-reference.md with `source: ad
 
 #### 5g: Report to User
 
-Report: tasks modified/added/removed counts, next task description, and whether active-phase.md was updated.
+Report: tasks modified/added/removed counts, next task description, and whether active-phase.md was updated. Always include: "Run `/dev-context` to reload state with adjusted tasks."
 
 ---
 

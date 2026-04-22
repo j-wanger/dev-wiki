@@ -7,10 +7,12 @@ Before writing ANY implementation code:
 3. State which task you are working on
 4. Follow the TDD cycle in the task description (RED -> GREEN -> REFACTOR -> VERIFY)
 5. VERIFY: Run the task's `success:` field commands
-   - If all pass → proceed to step 6 (mark [x])
+   - If all pass → proceed to step 5.5 (register)
    - If any fail → fix the issue and re-run VERIFY
    - If no `success:` field exists, emit "No success: field — verification skipped" and proceed
+5.5. REGISTER: Run dependency registration per `~/.claude/skills/dev-wiki/dependency-registration-spec.md`. Create/update file articles for created/modified scope files, maintain bidirectional imported_by. Skip if project <10 source files or all scope files are excluded types.
 6. When done, mark it [x] in tasks.md BEFORE moving to next
+7. After ALL tasks in the active phase are marked [x], run the Post-Implementation Self-Check from `~/.claude/skills/dev-plan/implementation-guide.md` before proceeding to `/dev-review`. Standard: all 7 categories; Lite: categories 1-2 only. Fix findings inline; escalate after 3 attempts per finding.
 
 ## Blocked Tasks
 After 3 failed attempts on a task:
@@ -20,11 +22,21 @@ After 3 failed attempts on a task:
 
 The 3-attempt counter is shared across the entire task lifecycle (RED + GREEN + VERIFY). It does NOT reset at VERIFY entry.
 
+Severity guides response urgency: if the blocked task involves shared state or irreversible actions, escalate immediately rather than exhausting all 3 attempts. If the task is isolated and low-risk, use all 3 attempts with different approaches.
+
 ## Escape Hatches (explain in commit message when used)
 - SECURITY: Fix a vulnerability immediately, log as unplanned task
 - DEPENDENCY: Do prerequisites first, add to tasks.md retroactively
 - USER OVERRIDE: Follow explicit user instructions, note the deviation
 - DISCOVERY: Add preconditions discovered during implementation
+
+## Knowledge Routing
+
+When an obstacle surfaces a reusable insight (applicable across projects), use `/wiki-capture` to send it to the knowledge wiki inbox. When the finding is project-specific lifecycle context (blocked-task reason, scope-shift rationale), it belongs in the dev-wiki journal — captured automatically at next `/dev-debrief`.
+
+## Safety Awareness
+
+When an action could affect shared state (git push, file deletion, external API calls), verify the action matches the current task scope. If the action seems disproportionate to the task, pause and confirm with the user. Reference: `/dev-harness H6` for full safety layer audit.
 
 ## Do NOT
 - Work on tasks out of order without an escape hatch reason

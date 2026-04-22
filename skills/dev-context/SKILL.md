@@ -28,74 +28,17 @@ All other sections: read-only. Never rewrite Active Phase, Contract, Decisions, 
 
 Both `.dev-wiki/` and `.dev-wiki/_CURRENT_STATE.md` must exist (in CWD or git root). If missing: "No dev wiki found. Run `/dev-init` to create one." / "Dev wiki incomplete. Run `/dev-init` to repair." Then STOP.
 
+**Ceremony level:** Read `WIKI_PATH/config.md` for `ceremony:` (lite|standard). Phase frontmatter overrides. Default: standard. Steps marked *(Lite: skip)* or *(Lite: simplified)* below are affected.
+
 ---
 
-## Phase 1: Breadcrumb Processing (Steps 1-2)
-**Skip condition:** No breadcrumb files exist (`.session-end`, `.pending-commit`, `.session-buffer`). If skipped, proceed directly to Phase 2.
+## Phases 1-2: Post-Session Processing
 
-## Step 1: Discover Dev Wiki
+**Phase 1 trigger:** Any of `.session-end`, `.pending-commit`, `.session-buffer` exists in `WIKI_PATH`.
+**Phase 2 trigger:** `.stale-queue` exists and is non-empty in `WIKI_PATH`.
+**Skip condition:** Neither Phase 1 nor Phase 2 triggers apply → proceed directly to Phase 3.
 
-Locate the dev wiki root:
-
-```bash
-ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-```
-
-Check `$ROOT/.dev-wiki/` for existence. Set `WIKI_PATH` to the absolute path of the `.dev-wiki/` directory. All subsequent steps use `WIKI_PATH`.
-
-If `.dev-wiki/` is not found at `$ROOT`, also check `$PWD/.dev-wiki/`. If neither location has it, STOP with the "No dev wiki found" message from Pre-checks.
-
-## Step 2: Process Breadcrumbs from Prior Session
-
-Check for breadcrumb files in `WIKI_PATH`. Process them in this priority order:
-
-### Case A: `.session-end` exists
-
-A prior session ended without running `/dev-debrief`.
-
-1. Read `.session-end` for session-end metadata (timestamp, pending_commit status, session_buffer status, recent commits, uncommitted files).
-2. If `debriefed: yes` is present, delete `.session-end` and continue to Step 3 (prior session already debriefed).
-3. If `debriefed: no` (or absent) AND `.session-buffer` exists: read `.session-buffer`, create a mechanical journal entry (see Journal Entry Format below), write to `WIKI_PATH/articles/journal/YYYY-MM-DD-<slug>.md`, update `_CURRENT_STATE.md` (Session Journal — keep last 5; Key Artifacts if meaningful changes), append to `log.md`, update `index.md`.
-4. Delete all breadcrumb files: `.session-end`, `.pending-commit`, `.session-buffer`.
-5. Note to user: "Previous session ended without debrief. I've created a basic journal entry from commit data."
-
-### Case B: `.pending-commit` exists (but no `.session-end`)
-
-A commit was recorded but the session continued (or crashed without the Stop hook firing).
-
-1. Read `.pending-commit` for the latest commit data.
-2. Check `WIKI_PATH/tasks.md` -- if any open task matches the commit message or committed files, mark it `[x]`.
-3. Delete `.pending-commit`.
-
-### Case C: No breadcrumbs
-
-Nothing to process. Continue to Step 3.
-
-## Mechanical Journal Entry Format
-
-Read Section J (mechanical journal template) and Section A (slugification) from dev-wiki/dev-wiki-reference.md. Mechanical journals are factual (data-only, 20-40 lines).
-
-## Phase 2: Incremental Refresh (Step 2.5)
-**Skip condition:** `.stale-queue` does not exist or is empty. If skipped, proceed directly to Phase 3.
-
-## Step 2.5: Process Stale Queue (Incremental Refresh)
-
-If `WIKI_PATH/.stale-queue` exists and is non-empty, process changed files per Section R read protocol of dev-wiki/dev-wiki-reference.md:
-
-1. Read all paths, deduplicate, validate each matches `[a-zA-Z0-9_./-]+` (discard invalid with warning)
-2. Process first **10 entries** (FIFO — oldest first; cap prevents slow startup)
-3. For each path:
-   - File exists: `shasum -a 256 <file> | cut -c1-16`, compare to article's `content_hash` in `WIKI_PATH/articles/files/<path-slug>.md`. If mismatch: update frontmatter `content_hash`. Only regenerate full article content if exports/imports changed (grep for export/import statements and diff against article).
-   - File deleted: remove file article, update parent module article's `files` list
-   - No article exists: skip (new file without prior scan — handled by next `/dev-scan`)
-   - Processing fails: keep entry in queue for next session
-4. Recompute composite hash for affected module articles (Section Q algorithm)
-5. Remove **only successfully processed** entries from `.stale-queue`
-6. If entries remain: keep for next session
-7. **Soft warning** at 100+ entries: `"Stale queue has N entries. Consider /dev-scan."`
-8. Report: `"[dev-wiki] Incremental refresh: N updated, M removed, K skipped."`
-
-If `.stale-queue` does not exist or is empty: skip silently.
+If Phase 1 OR Phase 2 applies: Read `~/.claude/skills/dev-context/post-session-processing.md` and follow its instructions for the applicable phase(s). Then proceed to Phase 3.
 
 ## Phase 3: State Loading + Emit (Steps 3-8)
 **Skip condition:** None -- always runs. This is the core of dev-context.
@@ -106,6 +49,7 @@ Read silently (inject into context, do NOT print):
 
 1. `WIKI_PATH/_CURRENT_STATE.md` -- project state, next action, active phase, decisions, blockers (required)
 2. `WIKI_PATH/_ARCHITECTURE.md` -- project structure, modules, dependencies, data flow (note absence; do not STOP)
+   **Conditional load:** If an active phase article exists (from `_CURRENT_STATE.md`), read its `scope:` frontmatter. If ALL scope entries match non-structural patterns (`~/.claude/skills/*`, `wiki/*`, `.dev-wiki/*`, `.claude/rules/*.md`), skip the full _ARCHITECTURE.md read. Set `architecture_loaded = false`. If ANY scope entry references project-root source files (e.g., `src/*`, `lib/*`, `*.py`, `*.ts`) or if no active phase exists, read _ARCHITECTURE.md fully and set `architecture_loaded = true`.
 3. `WIKI_PATH/tasks.md` -- tactical task list grouped by phase (note absence; do not STOP)
 4. `$ROOT/.claude/rules/active-knowledge.md` -- phase-scoped activated knowledge (optional — skip silently if absent)
 
@@ -127,14 +71,17 @@ From `_CURRENT_STATE.md` `## Active Phase` section, find the `[[phase-slug|Phase
 
 If no active phase, note: "No active phase. All phases may be complete, or phases need to be defined."
 
-### Step 5a: Fast-Lint (Quick Drift Detection)
+If phase slug extracted but article file does not exist on disk: warn "Phase article `<slug>.md` not found. Possible drift — run `/dev-check`." Continue to Step 6.
 
-Run 4 quick checks (~2 seconds total). If ANY fail, emit `"[dev-wiki] Drift detected. Run /dev check for full diagnosis."` Do NOT stop — continue to Step 6.
+### Step 5a: Fast-Lint (Quick Drift Detection) *(Lite: skip)*
+
+Run 5 quick checks (~2 seconds total). If ANY fail, emit `"[dev-wiki] Drift detected. Run /dev check for full diagnosis."` Do NOT stop — continue to Step 6.
 
 1. **S1: Active phase exists.** If `_CURRENT_STATE.md` references a phase via `[[phase-slug|...]]`, verify the article exists on disk.
 2. **S2: active-phase.md sync.** Compare the `Phase:` field in `.claude/rules/active-phase.md` against the active phase in `_CURRENT_STATE.md`. Must match.
-3. **S4: Single active phase.** Glob phase articles — count how many have `status: active` in frontmatter. 0 or 1 is valid; >1 is drift.
-4. **C1: Task-phase alignment.** Verify the active phase section exists in `tasks.md`.
+3. **S3: active-phase.md populated.** Read `active-phase.md`, verify Phase/Objective/Scope fields do not contain placeholder text (`(none)`, `TBD`, or empty). Severity: MEDIUM.
+4. **S4: Single active phase.** Glob phase articles — count how many have `status: active` in frontmatter. 0 or 1 is valid; >1 is drift.
+5. **C1: Task-phase alignment.** Verify the active phase section exists in `tasks.md`.
 
 ## Step 6: Detect Planning Needs
 
@@ -159,7 +106,7 @@ If `active-knowledge.md` was loaded in Step 3, parse its `## Phase: N - <Name>` 
 
 Check `./wiki/schema.md` (relative to project root, NOT inside `.dev-wiki/`). If it exists, read it for the wiki name and read `./wiki/index.md` for article count; include a summary line in the context block. If absent, omit the knowledge wiki line entirely.
 
-### Step 7a: Check Working Knowledge
+### Step 7a: Check Working Knowledge *(Lite: simplified)*
 
 Check `.claude/rules/working-knowledge.md` (relative to project root). See Section M of dev-wiki/dev-wiki-reference.md for the specification.
 
@@ -172,17 +119,17 @@ If absent, omit the working knowledge line entirely.
 
 **Cross-package ownership:** dev-context reads but NEVER writes to working-knowledge.md.
 
-### Step 7b: Knowledge-Gap Detection
+### Step 7b: Knowledge-Gap Detection *(Lite: skip)*
 
 If a knowledge wiki exists (Step 7) AND any of: (a) both `active-knowledge.md` and `working-knowledge.md` are absent/empty, OR (b) `active-knowledge.md` failed the phase-match check in Step 6a: emit `KNOWLEDGE: No domain knowledge loaded. Run /wiki-query to activate relevant facts.` If either file has valid, phase-matched content, skip.
 
-### Step 7c: Cadence Diagnostics
+### Step 7c: Cadence Diagnostics *(Lite: skip)*
 
-Count completed phases: Glob `$WIKI/articles/phases/*.md`, read each, count those with `status: completed` in frontmatter. If count > 0 AND count % 5 == 0: emit `"DIAGNOSTICS: N completed phases — consider /dev-retro."` Parse `_ARCHITECTURE.md` line 3 for `> Last updated:` date. If age > 3 days: emit `"DIAGNOSTICS: _ARCHITECTURE.md is N days stale — consider /dev-scan."`
+Count completed phases: Glob `WIKI_PATH/articles/phases/*.md`, read each, count those with `status: completed` in frontmatter. If count > 0 AND count % 5 == 0: emit `"DIAGNOSTICS: N completed phases — consider /dev-retro."` If `architecture_loaded = true`: parse `_ARCHITECTURE.md` line 3 for `> Last updated:` date. If age > 3 days: emit `"DIAGNOSTICS: _ARCHITECTURE.md is N days stale — consider /dev-scan."` If `architecture_loaded = false`: skip the staleness check (architecture was not loaded this session).
 
 ## Step 8: Emit Context Block
 
-Print a context block to the user. The format depends on whether there are open tasks (execution mode) or not (planning mode).
+Print a context block to the user. The format depends on whether there are open tasks (execution mode) or not (planning mode). **Lite mode:** Emit only NEXT ACTION, ACTIVE PHASE, TASKS, PLANNING lines. Skip HEALTH/SCAN/DIAGNOSTICS/Working Knowledge. Then stop.
 
 ### 8A: Planning Mode (0 open tasks, or no tasks at all)
 
@@ -205,7 +152,7 @@ Working knowledge: <N entries> (<M stale>) | not present
 DIAGNOSTICS: <retro/scan reminders from Step 7c> | omit if none
 ```
 
-**HEALTH line:** Parse `## Development Toolchain` from `_ARCHITECTURE.md`. Summarize detected tools in one line. If section absent: `HEALTH: not scanned`. If no tools: `HEALTH: no tools detected`.
+**HEALTH line:** If `architecture_loaded = true`: parse `## Development Toolchain` from `_ARCHITECTURE.md`. Summarize detected tools in one line. If section absent: `HEALTH: not scanned`. If no tools: `HEALTH: no tools detected`. If `architecture_loaded = false`: emit `HEALTH: architecture load skipped (no structural scope)`.
 
 ### 8B: Execution Mode (has open tasks — the common case)
 
@@ -228,6 +175,8 @@ OPEN QUESTIONS: <count>
 ACTIVE KNOWLEDGE: <N entries for Phase M> | not present
 
 Work this task following TDD. Mark [x] in tasks.md when done.
+BLOCKED: After 3 failed attempts → mark [blocked:] in tasks.md, ask user: skip / adjust / abort.
+CROSS-SUITE: Reusable insight → /wiki-capture. Project-specific event → journal (captured automatically at /dev-debrief).
 Next task after this: <preview of the task after the current one, or "last task in phase">
 
 KNOWLEDGE: <hint from Step 7b if triggered> | omit if not triggered

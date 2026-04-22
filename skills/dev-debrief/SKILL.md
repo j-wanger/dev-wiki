@@ -41,6 +41,8 @@ Full debrief: rewrites all 4 owned sections. Preserve Active Phase, Contract, De
 
 ## Pre-checks
 
+**Ceremony level:** Read `$WIKI/config.md` for `ceremony:` (lite|standard). Phase frontmatter overrides. Default: standard. Steps marked *(Lite: skip)* or *(Lite: simplified)* below are affected.
+
 1. **Discover dev wiki.** Run `git rev-parse --show-toplevel 2>/dev/null || pwd` to find `$ROOT`. Check if `$ROOT/.dev-wiki/` exists. If not: "No dev wiki found. Run `/dev-init` to set one up." STOP.
 
 2. **Verify living documents.** Use the Glob tool to check for `_CURRENT_STATE.md`, `_ARCHITECTURE.md`, `tasks.md`, `index.md`, and `log.md` under `.dev-wiki/`. Note any missing ones -- they will be created fresh.
@@ -77,28 +79,7 @@ Report: "Significance score: N. Running [full/quick] debrief."
 
 ## Quick Debrief Flow (Score < 5)
 
-### QD Step 1: Update tasks.md
-Use the Read tool on `$WIKI/tasks.md`. Cross-reference with session buffer commits and conversation to mark completed tasks `[x]`. Add any discovered tasks.
-
-### QD Step 2: Append 3-Line Journal Entry
-Create a minimal journal entry at `$WIKI/articles/journal/<today>-<slug>.md`. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section J for the quick journal template and Section A for the slugification algorithm.
-
-### QD Step 3: Refresh _CURRENT_STATE.md Next Action
-Use the Read tool on `$WIKI/_CURRENT_STATE.md`. Update ONLY `## Recommended Next Action` and the `> Last updated` timestamp. Do not rewrite the entire file.
-
-### QD Step 3a: Architecture Staleness Detection
-Run the same check as full debrief Step 9a (compare skill file mtimes against `_ARCHITECTURE.md` `Last updated` timestamp). Emit warning if stale.
-
-### QD Step 4: Append to log.md
-`[<ISO-timestamp>] DEBRIEF-QUICK -- tasks updated, quick journal, next action refreshed`
-
-### QD Step 5: Clean Up Breadcrumbs
-```bash
-rm -f "$WIKI/.pending-commit" "$WIKI/.session-buffer" "$WIKI/.session-end"
-```
-
-### QD Step 6: Report to User
-`Quick debrief done. Tasks: X completed, Y remaining. Next: "<next action>"`
+Read `~/.claude/skills/dev-debrief/quick-debrief-flow.md` for the full quick debrief procedure (QD Steps 1-6).
 
 ---
 
@@ -137,17 +118,38 @@ Analyze the **full conversation in your context window** to extract:
 8. **Health delta** -- if `## Development Toolchain` exists in `_ARCHITECTURE.md`, compare session-end state against baseline: test count changes (new tests added/removed), type errors introduced/resolved, lint violations, tools added/removed. Include delta in journal entry under `## Health Delta` if any changes occurred.
 9. **Soft observations / Phase N+1 candidates** -- if the session produced a validation-status article OR surfaced uncovered patterns, populate the optional `## Soft Observations / Phase N+1 Candidates` section in the journal entry per Section J. Source: bullet list of (observation, suggested next-phase framing, evidence link). Downstream phases use this section as their refinement-phase candidate source per [[wiki:refinement-phase-pattern]].
 
-### Step 5: Extract Decisions
+### Step 5: Extract Decisions *(Lite: skip)*
 
 For each candidate decision from Step 4, read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section I for the full decision extraction criteria (inclusion, exclusion, signal detection, confidence levels, noise prevention).
 
 For each qualifying decision, create a file at `$WIKI/articles/decisions/<slug>.md`. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section A for the slugification algorithm and Section I for the article template.
 
-### Step 6: Create Journal Entry
+### Step 6: Create Journal Entry *(Lite: simplified — key facts only)*
 
 Create ONE journal entry at `$WIKI/articles/journal/<today>-<slug>.md`. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section J for the rich journal template and Section A for slugification.
 
 If a journal file for today with the same slug exists, append a numeric suffix.
+
+### Step 6a: Activation Quality Logging
+
+If `$ROOT/.claude/rules/active-knowledge.md` exists:
+
+1. Count source sections (`###` headings under `## Phase:`) in active-knowledge.md.
+2. For each entry, extract its `from:` slug (e.g., `[[wiki:some-slug]]` → `some-slug`).
+3. Check if the slug was referenced in this session's conversation context (approximate literal match — search for the slug string in conversation artifacts, commit messages, or tool outputs from this session).
+4. Compute approximate hit rate: entries referenced / total entries.
+5. Append to the journal entry (Step 6) under `### Activation Quality`:
+   ```
+   Active knowledge: N entries, M referenced (~X% approximate hit rate, literal match).
+   ```
+   If hit rate < 60%, add: `Consider pruning low-relevance entries in next /dev-plan.` (Threshold per [[wiki:activation-heuristic-tuning]] — >60% is healthy activation.)
+
+If active-knowledge.md does not exist, skip this step.
+
+### Step 6b: Capture Check (wiki-capture surfacing)
+
+If the journal entry (Step 6) has a non-empty `## Soft Observations` section, count the bullet entries (`-` lines).
+Emit: `"N soft observations found — any worth capturing to the knowledge wiki? Run /wiki-capture for each reusable insight. (y/n)"`. Advisory — the user may have already captured insights in-session. If no Soft Observations section or section is empty, skip silently.
 
 ### Step 7: Update tasks.md
 
@@ -162,7 +164,7 @@ Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section B for size budget
 
 ### Step 8: Rewrite _CURRENT_STATE.md
 
-Rewrite `$WIKI/_CURRENT_STATE.md` respecting section ownership. Rewrite owned sections (Recommended Next Action, Session Journal, Key Artifacts, Cross-References) from scratch. Preserve sections owned by other skills (Active Phase, Active Phase Contract, Recent Decisions, Blockers and Open Questions) verbatim. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section F for the 7-section template and Section B for size budgets.
+Rewrite `$WIKI/_CURRENT_STATE.md` respecting section ownership. Rewrite owned sections (Recommended Next Action, Session Journal, Key Artifacts, Cross-References) from scratch. Preserve sections owned by other skills (Active Phase, Active Phase Contract, Recent Decisions, Blockers and Open Questions) verbatim. **Lite:** Rewrite only Recommended Next Action and Session Journal; preserve Key Artifacts and Cross-References verbatim. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section F for the 7-section template and Section B for size budgets.
 
 ### Step 8.5: Project CLAUDE.md Refresh Check
 
@@ -178,7 +180,7 @@ To scan the codebase structure, use the Glob tool with patterns like `$ROOT/src/
 
 Read `~/.claude/skills/dev-debrief/architecture-staleness-check.md` for the full procedure (catches skill files at `~/.claude/skills/` that are outside the stale-queue pipeline; runs in both full and quick debrief modes).
 
-### Step 10: Update Phase Articles
+### Step 10: Update Phase Articles *(Lite: simplified — frontmatter status only)*
 
 Use the Glob tool to list phase articles in `$WIKI/articles/phases/`. For each:
 
@@ -190,58 +192,23 @@ Phase transitions `active` -> `completed`: ALWAYS ask user, never auto-transitio
 
 ### Step 11: Create Status Snapshot
 
-Use the Glob tool to check if `$WIKI/articles/status/$(date +%Y-%m-%d)-codebase-snapshot.md` exists. If none, create one with file metrics, module structure, dependency versions, test status, and recent commits (last 5 from `git log`).
-
-**Scan article integration:** If `$WIKI/articles/status/*-scan.md` files exist from a prior `/dev-scan`, reference them in the snapshot rather than duplicating their content. The snapshot should summarize scan findings (module count, issue counts, hub modules), not replicate the full dependency maps.
-
-Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section B for size budgets.
+Read `~/.claude/skills/dev-debrief/debrief-finalization.md` Step 11 instructions.
 
 ### Step 12: Update .claude/rules/active-phase.md
 
-Always rewrite `$ROOT/.claude/rules/active-phase.md` in full debrief mode. The 10-15 line cost is negligible compared to the risk of stale compaction anchors.
+Always rewrite `$ROOT/.claude/rules/active-phase.md` in full debrief mode. Format: Phase, Objective, Scope, Key constraints, Exit criteria, Abort rule. Keep to 10-15 lines, 20 line hard cap per dev-wiki-reference.md Section B.
 
-Keep to 10-15 lines, 20 line hard cap. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section B for size budgets.
+### Step 12a: Working-Knowledge Decay *(Lite: skip)*
 
-```markdown
-# Active Phase Context
-
-Phase: N - <Phase Name>
-Objective: <one-line phase objective>
-Scope: <file globs from phase article>
-Key constraints:
-- <constraint> (from decision: <decision-slug>)
-Exit criteria:
-- <criterion>
-Abort: if blocked >3 attempts on any task, run /dev adjust
-```
-
-### Step 12a: Working-Knowledge Decay
-
-Run the Section M 7-day half-life decay algorithm on `$ROOT/.claude/rules/working-knowledge.md`. This step runs BEFORE Step 12b's carry-forward writes (if any) land, so freshly carried entries are not immediately decayed.
-
-1. If `working-knowledge.md` does not exist, skip.
-2. For each entry where `today - last_decay >= 7 days`:
-   - `uses = floor(uses / 2)`, minimum 1
-   - Update `last_decay:` to today's date
-3. After decay, evict entries where `uses: 1` AND `today - last_decay >= 21 days` (no references across 3 consecutive 7-day decay windows).
-4. Re-sort remaining entries by `uses` descending. Ties broken by most recent `activated:` date.
-5. If entries were decayed or evicted, note in Step 16 report: `"Working knowledge: N decayed, M evicted, K remaining."`
+Run the Section M 7-day half-life decay algorithm on `$ROOT/.claude/rules/working-knowledge.md`. Runs BEFORE Step 12b's carry-forward. Read dev-wiki-reference.md Section M for the full algorithm (7-day half-life, 21-day eviction, descending sort). Note decayed/evicted counts in Step 16 report.
 
 ### Step 12b: Validate/Prune active-knowledge.md
 
 Read `~/.claude/skills/dev-debrief/active-knowledge-transition.md` for the validate/prune/carry-forward logic. Covers two paths: phase-changed (carry forward all entries to working-knowledge, delete active-knowledge.md) and same-phase (auto-refresh stale entries). Skip if no knowledge wiki and no active-knowledge.md.
 
-### Step 13: Rebuild index.md
+### Steps 13-15: Index Rebuild, Log, Breadcrumb Cleanup
 
-Use the Glob tool to scan all files under `$WIKI/articles/`. Rebuild `$WIKI/index.md` with By Category, By Hierarchy, and Recent sections. Sort phases by numeric prefix, journal/status by date descending. Recent: last 10 articles by date.
-
-### Step 14: Append to log.md
-`[<ISO-timestamp>] DEBRIEF -- <N> decisions, 1 journal, tasks updated, state refreshed`
-
-### Step 15: Clean Up Breadcrumbs
-```bash
-rm -f "$WIKI/.pending-commit" "$WIKI/.session-buffer" "$WIKI/.session-end"
-```
+Read `~/.claude/skills/dev-debrief/debrief-finalization.md` Steps 13 *(Lite: skip Step 13)*, 14, and 15 instructions.
 
 ### Step 16: Report to User
 
@@ -257,6 +224,7 @@ Session debriefed (full):
 
 If a phase may be ready for completion, add a note. If `active-phase.md` was updated, note that too.
 If any artifact path from the session matches `~/.claude/skills/`, append: "Skill files were modified. Run `/dev-scan` to refresh `_ARCHITECTURE.md`."
+If all phase tasks are marked `[x]` in tasks.md, append: "Phase N complete. Run `/dev-plan` for Phase N+1."
 
 ---
 

@@ -164,6 +164,50 @@ Severity: WARNING
 Read all `.md` files under `articles/`. Extract `[[wiki-name:slug]]` cross-wiki links. For each, check if `$ROOT/wiki/` (or the path for the named wiki) exists and contains a matching article. Report unresolvable cross-wiki links.
 Severity: INFO
 
+**C12: Orphan decisions**
+Glob `articles/decisions/*.md`. For each decision article, extract its slug (filename without `.md`). Search `articles/phases/*.md` and `articles/journal/*.md` body content (Read each, skip frontmatter) for wikilink references `[[<slug>]]` or `[[<slug>|...]]`. If no phase or journal article references the decision slug, flag as orphan. Known false-positive class: decisions referenced only from `_CURRENT_STATE.md` cross-references section — acceptable at INFO severity since `_CURRENT_STATE.md` is not searched. Cap: check at most 20 decision articles (most recent by filename).
+Severity: INFO
+
+Tier 2 fix: "Review orphan decisions — link from relevant phase/journal articles or archive if superseded."
+
+**C13: Orphan completed phases**
+For each phase article with `status: completed` in frontmatter, extract its slug. Search `articles/journal/*.md` body content for wikilink references `[[<slug>]]` or `[[<slug>|...]]`. If no journal article references the completed phase slug, flag as orphan (completed without debrief). Cap: check at most 20 most recent completed phases.
+Severity: INFO
+
+Tier 2 fix: "Run `/dev-debrief` retroactively or note that the phase was debriefed informally."
+
+**C14: Cross-layer conflict detection**
+Per [[wiki:anti-patterns-in-agent-prompts]] Anti-Pattern 2 (contradictory instructions). Read `~/.claude/CLAUDE.md` (global), `$ROOT/CLAUDE.md` (project), and `$ROOT/.claude/rules/active-phase.md` (dynamic). Check for 3 concrete contradiction patterns:
+
+1. **Opposite polarity:** Grep all three layers for tool-routing directives (e.g., "use X", "do not use X", "prefer X", "avoid X"). If the same tool/pattern appears with opposite polarity across layers without an explicit precedence declaration in the project CLAUDE.md, flag.
+2. **Same concern, no precedence:** If the same section header (e.g., `## Testing`, `## Security`) appears verbatim in both global and project CLAUDE.md, or if a fixed concern keyword (`commit`, `review`, `test`, `deploy`, `security`, `hooks`, `agents`) appears under directives in both layers, verify the project CLAUDE.md contains an explicit precedence statement (e.g., "project rules win for the same concern"). If absent, flag.
+3. **Conflicting allowedTools:** Read `~/.claude/settings.json` and `$ROOT/.claude/settings.json` (if exists). If both define `allowedTools` arrays for the same context, check for contradictions (tool allowed globally but denied locally or vice versa). Flag conflicts.
+
+**Note:** An existing explicit precedence declaration (e.g., "project rule wins" in CLAUDE.md) is the fix, not a conflict. Do not flag precedence declarations as contradictions.
+Severity: WARNING
+
+Tier 2 fix: "Add explicit precedence declaration to project CLAUDE.md or reconcile conflicting directives."
+
+**C15: Reviewer verdict format consistency**
+Per [[wiki:verdict-vocabulary-drift]], reviewer verdict format silently drifts across sibling prompt files. This HARD-tier check verifies all reviewer prompts in the defined cohort use the canonical `Score:/Verdict:` output format.
+
+Explicit cohort (10 files):
+- `~/.claude/skills/wiki-absorb/reviewer-prompt.md`
+- `~/.claude/skills/wiki-ingest/reviewer-prompt.md`
+- `~/.claude/skills/wiki-bootstrap/reviewer-prompt.md`
+- `~/.claude/skills/wiki-reorg/reviewer-prompt.md`
+- `~/.claude/skills/wiki-synthesize/reviewer-prompt.md`
+- `~/.claude/skills/dev-plan/approach-reviewer-prompt.md`
+- `~/.claude/skills/dev-plan/plan-reviewer-prompt.md`
+- `~/.claude/skills/dev-review/code-reviewer-prompt.md`
+- `~/.claude/skills/dev-review/knowledge-reviewer-prompt.md`
+- `~/.claude/skills/dev-review/artifact-reviewer-prompt.md`
+
+For each file in the cohort, Grep the body (skip frontmatter) for both `Score:` AND `Verdict:` keywords. Both must be present for canonical format compliance. Flag files missing either keyword with the specific missing keyword(s).
+Severity: WARNING
+
+Tier 2 fix: "Realign flagged reviewer prompts to canonical Score/Issues/Suggestions/Verdict format per [[wiki:verdict-vocabulary-drift]]."
+
 ### Scan Article Checks
 
 These checks validate `articles/status/*-scan.md` against the actual codebase. If no scan articles exist, skip these checks (scan is optional).
@@ -240,7 +284,7 @@ Sample up to 10 file articles. For each, read `imported_by` frontmatter. Verify 
 Severity: INFO
 
 **CA5: Stale queue health**
-If `.stale-queue` exists, read and validate entries match `[a-zA-Z0-9_./-]+`. Flag invalid entries. Report count and warn if >100 (soft cap per Section R). Flag entries referencing deleted files.
+If `.stale-queue` exists, read and validate entries match `[a-zA-Z0-9_./-]+`. Flag invalid entries. Report count and warn if >100 (soft cap per stale-queue-spec.md). Flag entries referencing deleted files.
 Severity: INFO
 
 Tier 2 fix for CA2: "Run `/dev-scan` to refresh stale code articles." Tier 2 fix for CA5: "Remove invalid entries from `.stale-queue`."
@@ -396,7 +440,7 @@ After applying any fixes (Tier 1 or Tier 2), append to `log.md`:
 [dev-wiki] Drift detected. Run /dev check for full diagnosis.
 ```
 
-`/dev check` is the full diagnostic -- all 38 checks plus repair. It is always invoked explicitly by the user, never automatically.
+`/dev check` is the full diagnostic -- all 40 checks plus repair. It is always invoked explicitly by the user, never automatically.
 
 ---
 

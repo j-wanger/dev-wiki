@@ -1,9 +1,9 @@
 ---
 name: dev-harness
-description: Use when auditing the agent harness. Runs 5 H-checks (CLAUDE.md, settings, rules, agents, MCP) read-only. Do NOT use for phase review (use /dev-review) or wiki health (use /wiki-lint).
+description: Use when auditing the agent harness. Runs 6 H-checks (CLAUDE.md, settings, rules, agents, MCP, safety) read-only. Do NOT use for phase review (use /dev-review) or wiki health (use /wiki-lint).
 reads: [~/.claude/CLAUDE.md, $ROOT/CLAUDE.md, ~/.claude/settings.json, $ROOT/.claude/settings*.json, ~/.claude/rules/**/*.md, ~/.claude/agents/*.md, $ROOT/.mcp.json, $ROOT/.dev-wiki/schema.md, ~/.claude/skills/dev-harness/*.md]
 writes: []
-dispatches: [h1-claude-md-coherence, h2-settings-and-hooks, h3-rules-drift, h4-subagent-coherence, h5-mcp-and-auth (all conditional on argument or run-all default)]
+dispatches: [h1-claude-md-coherence, h2-settings-and-hooks, h3-rules-drift, h4-subagent-coherence, h5-mcp-and-auth, h6-safety-layer-audit (all conditional on argument or run-all default)]
 tier: simple-orchestration
 ---
 
@@ -21,14 +21,15 @@ H-checks are self-describing companion files (Phase 17 pattern): each companion 
 | H2 | `h2-settings-and-hooks.md` | settings.json parses + schema, hook-script paths resolve + executable, no behavioral drift, mcpServers schema, hook event names |
 | H3 | `h3-rules-drift.md` | common/* imports resolve, non-common rules/*.md documented (section-anchored to `## Sibling Files`), no global dynamic rules, no project-content leak in common/, overlay subdirs documented (section-anchored) |
 | H4 | `h4-subagent-coherence.md` | agents/*.md frontmatter coherence — name field, name=filename, description ≥10 chars, trigger verb, tools array shape |
-| H5 | `h5-mcp-and-auth.md` | MCP server discovery (settings.json + .mcp.json + plugin manifests), name uniqueness, command/url validity, OAuth credential file presence, `mcp_required` opt-in (7 sub-checks H5.i-vii) |
+| H5 | `h5-mcp-and-auth.md` | MCP server discovery (settings.json + .mcp.json + plugin manifests), name uniqueness, command/url validity, OAuth credential file presence, `mcp_required` opt-in |
+| H6 | `h6-safety-layer-audit.md` | Safety layer coverage (5-layer inventory), failure mode severity classification, stake-level autonomy mapping, safety primitive verification |
 
 ---
 
 ## Pre-checks
 
 1. **Discover scope.** Run `git rev-parse --show-toplevel 2>/dev/null || pwd` to find `$ROOT`. `$WIKI = $ROOT/.dev-wiki`. `$WIKI` may not exist (some projects have no dev-wiki) — proceed regardless.
-2. **Determine check set.** If invoked with no arguments, run all available H-checks (H1-H5; see H-Checks table). If invoked with `H<N>` argument, run only that check. If `H<N>` companion missing, report "Check H<N> not yet implemented" and STOP.
+2. **Determine check set.** If invoked with no arguments, run all available H-checks (H1-H6; see H-Checks table). If invoked with `H<N>` argument, run only that check. If `H<N>` companion missing, report "Check H<N> not yet implemented" and STOP.
 
 ---
 

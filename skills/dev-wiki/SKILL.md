@@ -76,16 +76,16 @@ These thoughts mean STOP -- you are rationalizing skipping lifecycle discipline:
 
 ## Skill Classification
 
-All dev-wiki skills are **single-agent** (Claude does all work directly, no subagent dispatch):
+Most dev-wiki skills are **single-agent** (Claude does all work directly). Exceptions noted below:
 
 - `/dev-init` -- Bootstrap `.dev-wiki/` scaffold
 - `/dev-context` -- Session startup state loader
-- `/dev-plan` -- Phase planning with wiki knowledge retrieval
+- `/dev-plan` -- Phase planning with wiki knowledge retrieval (dispatches approach + plan reviewer subagents)
 - `/dev-debrief` -- Tiered session capture (full or quick)
 - `/dev-check` -- 37-check structural validator (includes S12-S15 skill metadata checks)
 - `/dev-adjust` -- Lightweight mid-phase replanning
-- `/dev-scan` -- Deep codebase analysis (hybrid: main agent scans, subagents synthesize articles)
-- `/dev-review` -- Formal review gate (fan-out: 3 parallel reviewer subagents, fan-in: synthesized report)
+- `/dev-scan` -- Deep codebase analysis (**hybrid:** main agent scans, subagents synthesize articles)
+- `/dev-review` -- Formal review gate (**fan-out:** 3 parallel reviewer subagents, fan-in: synthesized report)
 - `/dev-retro` -- Process retrospective (7 structured dimensions, run every 5-10 phases)
 
 ## Command Reference
@@ -109,10 +109,10 @@ All dev-wiki skills share `~/.claude/skills/dev-wiki/dev-wiki-reference.md` (Sec
 
 ## Cross-Package Integration
 
-- dev-wiki owns `.dev-wiki/`, project-wiki owns `wiki/`
+- dev-wiki owns `.dev-wiki/`, knowledge-wiki owns `wiki/`
 - `/dev-plan` reads wiki articles for knowledge-informed planning
 - `active-knowledge.md` (written by `/dev-plan`) and `working-knowledge.md` (written by `/wiki-query`) are separate knowledge layers
-- project-wiki does not write to `.dev-wiki/`; dev-wiki does not write to `wiki/`
+- knowledge-wiki does not write to `.dev-wiki/`; dev-wiki does not write to `wiki/`
 
 ## If Unclear
 

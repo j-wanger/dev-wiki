@@ -2,7 +2,7 @@
 name: dev-plan
 description: "Use when .dev-wiki/ exists for phase planning. MUST BE USED instead of brainstorming in .dev-wiki/ projects. Do NOT use for mid-phase task changes (use dev-adjust)."
 reads: [$WIKI/_CURRENT_STATE.md, $WIKI/_ARCHITECTURE.md, $WIKI/tasks.md, $WIKI/articles/phases/*, $WIKI/articles/decisions/*]
-writes: [$WIKI/_CURRENT_STATE.md(Active Phase, Contract, Decisions, Blockers), $WIKI/tasks.md, $WIKI/articles/phases/*, $WIKI/articles/decisions/*, $ROOT/.claude/rules/active-phase.md, $ROOT/.claude/rules/active-knowledge.md, $ROOT/.claude/rules/working-knowledge.md]
+writes: [$WIKI/_CURRENT_STATE.md(Active Phase, Contract, Decisions, Blockers), $WIKI/tasks.md, $WIKI/articles/phases/*, $WIKI/articles/decisions/*, $ROOT/.claude/rules/active-phase.md, $ROOT/.claude/rules/active-knowledge.md, $ROOT/.claude/rules/working-knowledge.md(seed cross-phase entries, decay, sort)]
 dispatches: [plan-reviewer, approach-reviewer]
 tier: complex-orchestration
 ---
@@ -16,11 +16,13 @@ Plan one phase at a time, informed by accumulated wiki knowledge. Replaces brain
 ## Section Ownership — _CURRENT_STATE.md
 
 This skill OWNS and rewrites these sections (preserve all others verbatim):
+- `## Recommended Next Action`
 - `## Active Phase`
 - `## Active Phase Contract`
 - `## Recent Decisions`
 
 May APPEND to: `## Blockers and Open Questions` (planning questions only — do not rewrite or remove existing entries).
+May SEED: `.claude/rules/working-knowledge.md` (Step 8f-ter, user-gated). wiki-query also writes this file (Steps 7a, 8) — caps are idempotent.
 
 ---
 
@@ -42,6 +44,8 @@ This applies to EVERY phase regardless of perceived simplicity.
 
 ## Pre-checks
 
+0. **Resume check.** If invoked with `--resume` and `$ROOT/.dev-wiki/.planning-pause` exists, read `~/.claude/skills/dev-plan/research-pause-spec.md` and follow the resume protocol (skip to Step 5 with saved state). Delete `.planning-pause` after the user provides a non-pause answer (i.e., Step 6 begins).
+
 1. **Discover dev wiki.** Run `git rev-parse --show-toplevel 2>/dev/null || pwd` to find `$ROOT`. Check `$ROOT/.dev-wiki/_CURRENT_STATE.md`. If missing: "No dev wiki found. Run `/dev init` first." STOP.
 
 2. **Verify living documents.** Confirm `_CURRENT_STATE.md`, `_ARCHITECTURE.md`, `tasks.md` exist under `.dev-wiki/`. If any are missing, note which ones -- they will be created during Step 8.
@@ -56,6 +60,10 @@ This applies to EVERY phase regardless of perceived simplicity.
 4. **Ensure article directories exist:** `mkdir -p "$ROOT/.dev-wiki/articles/decisions" "$ROOT/.dev-wiki/articles/phases"`
 
 Throughout this flow, `$ROOT` is the project root. `$WIKI` is `$ROOT/.dev-wiki`. Today's date is `$(date +%Y-%m-%d)`.
+
+### Step 0.5: Ceremony Level Detection
+
+Read `$WIKI/config.md` for `ceremony:` value (lite or standard). If absent, default to `standard`. Check target phase article frontmatter for `ceremony:` override (frontmatter wins). Read `~/.claude/skills/dev-plan/ceremony-levels.md` for per-step skip rules. Steps marked *(Lite: skip)* below are skipped when ceremony = lite.
 
 ---
 
@@ -82,7 +90,7 @@ If no articles score >0 across all wikis, emit: `"Cross-wiki retrieval: N wikis 
 
 If no `~/.claude/wikis.json` and no `$ROOT/wiki/`, skip. **Budget:** 5 articles initially (Step 2.5 may expand to 14 via iterative loop).
 
-### Step 2.5: Iterative Knowledge Completeness Check
+### Step 2.5: Iterative Knowledge Completeness Check *(Lite: skip)*
 
 Read `~/.claude/skills/dev-plan/iterative-retrieval-spec.md` for the full loop protocol. Extract concepts (frozen set), then iterate up to 3 rounds until coverage ≥ 70% or no new articles. Pass unfillable gaps to Step 4 as design questions. If Step 2 was skipped (no wikis), skip this step.
 
@@ -94,16 +102,14 @@ Extract the `scope` field (file globs) from the phase article. Glob each pattern
 
 1. Read module articles matching the phase scope — extract `internal_deps`, `dependents`, `files` for structural overview
 2. Read file article frontmatter for scope files — extract `exports`, `imports`, `imported_by` for dependency data
-3. **Blast radius:** For each scope file, follow `imported_by` chains (1 level) to identify files affected by changes. Flag high-fanout files (5+ dependents) as requiring careful task ordering.
-4. Cross-reference module `## Issues` or `## Key Patterns` to inform task priorities (HIGH issues become early tasks)
+3. **Blast radius (bidirectional, 2-level):** Follow both `imports` (upstream risk: could dependencies break us?) and `imported_by` (downstream risk: will changes break consumers?) chains 2 levels deep. Include files whose `data_reads` overlap with scope files' `data_writes`. Flag high-fanout files (5+ in either direction) for careful task ordering.
+4. **Refactor advisory + task priorities:** If any scope file has imports≥5 AND imported_by≥5, emit: *"Coupling nexus: <file> (N upstream, M downstream). Consider splitting before modifying."* Cross-reference module `## Key Patterns` and `## Issues` for task ordering (HIGH issues → early tasks).
 
 **Raw file fallback:** If no code articles exist, Read at most 10 files, 150 lines each. Note code structure, test coverage, naming conventions, dependencies. If greenfield, note "no existing code."
 
-**Legacy scan articles:** If `$WIKI/articles/status/*-scan.md` exist (Section N format), read for modules within scope. Use **Connected Files** for blast radius and **Issues** for task priorities. Code articles (Section O/P) supersede these when both exist.
-
 **Budget:** Cap total exploration at ~5000 tokens.
 
-### Step 3.5: Pre-Implementation Validation Gate
+### Step 3.5: Pre-Implementation Validation Gate *(Lite: skip)*
 
 Read `## Development Toolchain` from `$WIKI/_ARCHITECTURE.md`. If present, check: (1) test framework exists if TDD tasks planned — surface as Step 5 question if missing, (2) type checker/linter — note as non-blocking warnings if absent. If section absent: `"Toolchain status unknown — run /dev-scan."` (non-blocking). Optional: run lightweight tool checks (pytest --co, mypy --version, tsc --noEmit) if tools detected. **Budget:** Max 3 Bash calls.
 
@@ -117,7 +123,9 @@ For each question, check: Does a prior decision already answer this? Does a know
 
 ### Step 5: Ask User Goal-Oriented Questions
 
-The wiki provides domain knowledge; the user provides **intent**. Three question types: **Goal** ("Should this produce a prototype or a design doc?"), **Constraint** ("Are we allowed to change the ownership contract?"), **Priority** ("If we can only fit 3 of 4, which do we drop?"). 1-3 questions total, one at a time, A/B/C choices preferred. Zero questions is valid if prior decisions fully constrain the approach.
+The wiki provides domain knowledge; the user provides **intent**. Three question types: **Goal** ("Should this produce a prototype or a design doc?"), **Constraint** ("Are we allowed to change the ownership contract?"), **Priority** ("If we can only fit 3 of 4, which do we drop?"). 1-3 questions total *(Lite: 0-1)*, one at a time, A/B/C choices preferred. Zero questions is valid if prior decisions fully constrain the approach.
+
+**Research pause:** If the user's answer reveals they need to research a topic before committing to a direction (e.g., "I need to learn about X first"), read `~/.claude/skills/dev-plan/research-pause-spec.md` and follow the save protocol. This preserves planning state so `/dev-plan --resume` can skip Steps 1-4 after research completes.
 
 ### Step 6: Propose Approach
 
@@ -130,7 +138,7 @@ Based on user's answers (or prior constraints), propose the approach for THIS PH
 
 **PERSIST immediately:** Write draft decision article at `$WIKI/articles/decisions/<slug>.md` with `confidence: low`. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section I for the decision article template.
 
-### Step 6.1: Contradiction Check (Inline)
+### Step 6.1: Contradiction Check (Inline) *(Lite: skip)*
 
 Search for wiki knowledge that might contradict the proposed approach. Serial inline (not subagent).
 
@@ -140,7 +148,7 @@ Search for wiki knowledge that might contradict the proposed approach. Serial in
 4. Read up to 3 new articles. Flag contradictions or better alternatives.
 5. If contradictions found, revise approach before dispatching the reviewer.
 
-### Step 6.5: Automatic Approach Critique
+### Step 6.5: Automatic Approach Critique *(Lite: skip)*
 
 Before presenting to the user, critique the approach using a subagent:
 
@@ -166,16 +174,16 @@ A vague "sure" counts as approval. Silence does NOT.
 
 If the user requests changes, revise, update the draft decision article, and re-present. **Maximum 3 revision rounds.** After 3: "Consider running /dev adjust later if the approach needs further iteration."
 
-### Step 7.5: Draft Tasks and Review Plan Quality
+### Step 7.5: Draft Tasks and Review Plan Quality *(Lite: skip — merge into Step 7)*
 
-1. **Draft tasks** in conversation context (do NOT write to files yet). Follow Section C enriched task schema: each task needs description, TDD cycle, scope, success, size.
+1. **Draft tasks** in conversation context (do NOT write to files yet). Follow Section C enriched task schema *(Lite: simplified schema per ceremony-levels.md)*: each task needs description, TDD cycle, scope, success, size.
 2. **Dispatch plan reviewer subagent.** Read `~/.claude/skills/dev-plan/plan-reviewer-prompt.md`. Launch Agent with the prompt + phase article (objective, exit criteria) + retrieved wiki articles + drafted tasks. Collect Score/Issues/Verdict. **Timeout:** 120 seconds. If subagent fails or times out: accept draft tasks without review score. Warn: `"Plan reviewer unavailable — proceeding without quality gate."`
 3. **Handle verdict:**
    - Score 9-10 (accept): Proceed to Step 7.6.
    - Score 6-8 (revise): Fix flagged issues in the draft, re-review once. If still ≤8, accept best version.
    - Score 1-5 (reject): Surface specific CRITICAL issues to the user. Do NOT auto-accept. User decides: fix issues or proceed with acknowledged gaps.
 
-### Step 7.6: Present Reviewed Plan to User
+### Step 7.6: Present Reviewed Plan to User *(Lite: skip — single gate at Step 7)*
 
 Present the drafted tasks AND the reviewer's findings as a single report. This is a **second approval gate** — the user has already approved the approach (Step 7), now they approve the detailed plan.
 
@@ -185,11 +193,11 @@ Wait for explicit approval before proceeding to Step 8. If user requests changes
 
 All wiki artifacts are updated atomically. Follow this order:
 
-#### 8a: Finalize Decision Articles
+#### 8a: Finalize Decision Articles *(Lite: skip)*
 Update draft decisions: set `confidence` to `medium`/`high`, set `source: plan`. Create additional articles for new decisions from Steps 5-7.
 
 #### 8b: Write Tasks to tasks.md
-Write tasks for the target phase (Section C: enriched task schema, Section B: size budgets). Each task MUST include TDD cycle (RED/GREEN/REFACTOR), scope, success criterion, and size. Order by dependency. At most 1 L task per phase.
+Write tasks for the target phase (Section C: enriched task schema, Section B: size budgets). Each task MUST include TDD cycle (RED/GREEN/REFACTOR), scope, success criterion, and size *(Lite: simplified schema — description+scope+success only, see ceremony-levels.md)*. Order by dependency. At most 1 L task per phase.
 
 #### 8c: Update _CURRENT_STATE.md
 Rewrite `## Recommended Next Action`, `## Active Phase` (status: active, ~0%), `## Active Phase Contract`, `## Recent Decisions`, and `## Blockers and Open Questions` (remove resolved `[planning]` questions). Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section F for the template.
@@ -203,17 +211,17 @@ Set `status: active`, `updated: <today>`. If creating a new phase article, read 
 #### 8f: Write Compaction Anchor -- active-phase.md
 Do NOT create any other hooks or rules files beyond `active-phase.md` and `active-knowledge.md` (Steps 8f and 8f-bis). Ensure `$ROOT/.claude/rules/` exists (`mkdir -p`). Write `$ROOT/.claude/rules/active-phase.md` with: Phase, Objective, Scope (file globs), Key constraints (from decisions), Exit criteria, Abort rule. Size: 10-15 lines, ~50 tokens.
 
-#### 8f-bis: Write Compaction Anchor -- active-knowledge.md
+#### 8f-bis: Write Compaction Anchor -- active-knowledge.md *(Lite: skip)*
 
 Distill cross-wiki articles from Step 2 and phase decisions from Steps 5-7 into `.claude/rules/active-knowledge.md`. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section L for the template, evaluation criteria, and size budget.
 
 **Process:** (1) Extract 2-5 key propositions per source. (2) Evaluate each: must pass 2 of 3 filters from Section L (multi-turn, non-obvious, phase-dependent) -- drop the rest. (3) Assemble using the Section L template. (4) Count lines: if >30 re-distill; if still >40: skip writing active-knowledge.md, report: "Active knowledge exceeds 40-line cap. Skipping." Continue with Step 8g. (5) Write to `$ROOT/.claude/rules/active-knowledge.md`, overwriting any prior phase file.
 
-**Skip:** If no knowledge wiki and no new decisions in Steps 5-7, skip entirely. If a prior-phase file exists, delete it.
+**Skip:** If no knowledge wiki and no new decisions in Steps 5-7, skip entirely. Delete any prior-phase file if it exists; if absent, skip silently.
 
 #### 8f-ter: Seed Working Knowledge (Cross-Phase Facts)
 
-After writing active-knowledge.md, evaluate retrieved facts from Step 2 that were NOT included in active-knowledge (failed phase-dependent filter but passed multi-turn + non-obvious). These are cross-phase facts useful beyond this phase. If any exist, offer: `"N cross-phase facts available for working knowledge. Activate? (y/n)"`. On confirmation: (1) read existing `.claude/rules/working-knowledge.md` if it exists, (2) apply 7-day decay per Section M (halve `uses` for entries where today - `last_decay` >= 7 days, update `last_decay`), (3) dedup new entries against existing by source slug — if match, increment `uses` instead of inserting, (4) append genuinely new entries as `[uses: 1]` with `activated: <today>`, `last_decay: <today>`, (5) sort all entries by usage count descending, (6) apply LRU eviction if >100 entries. Skip if no cross-phase facts found.
+After writing active-knowledge.md, evaluate retrieved facts from Step 2 that were NOT included in active-knowledge (failed phase-dependent filter but passed multi-turn + non-obvious). These are cross-phase facts useful beyond this phase. If any exist, offer: `"N cross-phase facts available for working knowledge. Activate? (y/n)"`. On confirmation: (1) read existing `.claude/rules/working-knowledge.md` if it exists, (2) apply 7-day decay per Section M (halve `uses` for entries where today - `last_decay` >= 7 days, update `last_decay`), (3) dedup new entries against existing by source slug — if match, increment `uses` instead of inserting, (4) append genuinely new entries as `[uses: 1]` with `activated: <today>`, `last_decay: <today>`, (5) sort all entries by usage count descending, (6) apply LRU eviction if >100 entries, (7) enforce 210-line hard cap — evict lowest-count entries (ties: oldest activated date) until within cap. Skip if no cross-phase facts found.
 
 #### 8g: Mirror Tasks to TodoWrite (Compaction Anchor)
 Write each task to TodoWrite with embedded constraints. Set all to `pending`. Set first to `in_progress` only if user will continue in this session (determined in Step 9).
@@ -231,17 +239,11 @@ Read `~/.claude/skills/dev-plan/implementation-guide.md` for Option A or C instr
 
 ---
 
-## Compaction Anchors
+## Tool Standards
 
-Step 8 writes three anchors: `active-phase.md` (~50 tokens), `active-knowledge.md` (~150 tokens), TodoWrite tasks.
+- **Glob** for file discovery (not find/ls via Bash)
+- **Grep** for content search (not grep/rg via Bash)
+- **Read** for reading files (not cat/head/tail via Bash)
+- **Bash** reserved for git, build tools, and system commands with no dedicated tool
 
----
-
-## Error Handling
-
-| Error | Response |
-|-------|----------|
-| No `.dev-wiki/` | "Run `/dev init` first." STOP. |
-| Open tasks exist | "Phase N has X open tasks. Continue or `/dev adjust`." STOP. |
-| User rejects approach | Revise and re-present (max 3 rounds). |
-| No phases defined | "Run `/dev init`." STOP. |
+> Compaction anchors and error handling extracted to companion. See `dev-plan/compaction-anchors-spec.md`.

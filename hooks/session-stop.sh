@@ -1,6 +1,6 @@
 #!/bin/bash
 # session-stop.sh (Stop)
-# Saves session breadcrumb for dev-wiki and emits project-wiki reminder.
+# Saves session breadcrumb for dev-wiki and emits knowledge-wiki reminder.
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
@@ -20,7 +20,7 @@ fi
 
 # --- Project Wiki reminder ---
 if [ -d "$ROOT/wiki" ] && [ -d "$ROOT/wiki/articles" ]; then
-  echo '[project-wiki] Session ending. Review your recent work for uncaptured learnings. Run /wiki-capture in your next session to preserve insights.'
+  echo '[knowledge-wiki] Session ending. Review your recent work for uncaptured learnings. Run /wiki-capture in your next session to preserve insights.'
 fi
 
 exit 0

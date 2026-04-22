@@ -68,58 +68,27 @@ Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` final section (Directory 
 
 ### Step 6: Create schema.md
 
-Infer domain and description from Step 3 context. Write `.dev-wiki/schema.md`:
+Read `~/.claude/skills/dev-init/init-scaffolding.md` for the schema.md template. Infer domain and description from Step 3 context. Write `.dev-wiki/schema.md` using the template.
+
+### Step 6.5: Create config.md
+
+Write `.dev-wiki/config.md` with ceremony configuration. Default to `standard` for complex/meta-tooling projects. For small app projects, suggest `lite` (see `~/.claude/skills/dev-plan/ceremony-levels.md`).
 
 ```markdown
-# Dev Wiki Schema
-
-## Project Identity
-
-- **domain:** <inferred domain>
-- **name:** <project name from manifest or directory name>
-- **description:** <1-2 sentence project description>
-
-## Article Categories
-
-| Category | Directory | Purpose |
-|----------|-----------|---------|
-| phases | articles/phases/ | Strategic milestone definitions |
-| decisions | articles/decisions/ | Architectural Decision Records |
-| journal | articles/journal/ | Session journal entries (1 per session) |
-| status | articles/status/ | Legacy codebase snapshots (read-only, see Section N) |
-| modules | articles/modules/ | Per-directory code intelligence articles (Section P) |
-| files | articles/files/ | Per-file code intelligence articles (Section O) |
-
-## Conventions
-
-- Phase filenames: `phase-NN-<slug>.md`
-- Decision filenames: `<slug>.md`
-- Journal filenames: `YYYY-MM-DD-<slug>.md`
-- Wikilinks: `[[slug|Display Text]]`
+ceremony: standard
 ```
 
 ### Step 7: Create Phase Articles -- INTERACTIVE
 
-This is the only interactive step. Present proposed phases for user confirmation.
+This is the only interactive step. Present proposed phases for user confirmation. Carry the `mode` flag (greenfield|retrofit) from Step 4 into this step.
 
-Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section H for the phase article template (frontmatter + body format) and Section A for the slugification algorithm.
+Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section H for the phase article template and Section A for slugification.
 
 #### Greenfield mode
 
 1. Analyze project context from Step 3.
 2. Propose 2-4 phases with logical progression.
-3. Present:
-   ```
-   Proposed phases (greenfield project):
-
-     Phase 1: <Name> -- <one-sentence description>
-       scope: <file globs>
-       exit: <exit criteria summary>
-
-     Phase 2: ...
-
-   Edit, remove, add phases, or say "looks good" to confirm.
-   ```
+3. Present phases with scope and exit criteria. Ask user to edit, remove, add, or confirm.
 4. Wait for user confirmation. At least 1 phase required.
 5. First phase gets `status: active`. Others get `status: not-started`.
 
@@ -132,21 +101,7 @@ Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section H for the phase a
 
 #### Writing phase files
 
-For each confirmed phase, write `articles/phases/phase-NN-<slug>.md` using the template from the reference file.
-
-Also write `.claude/rules/active-phase.md` (ensure dir exists with `mkdir -p "$ROOT/.claude/rules"`):
-
-```markdown
-# Active Phase Context
-
-Phase: N - <Name>
-Objective: <from active phase article>
-Scope: <from scope globs>
-Key constraints: <from project context or "none yet">
-Exit criteria:
-- <from phase article>
-Abort: if blocked >3 attempts on any task, run /dev adjust
-```
+For each confirmed phase, write `articles/phases/phase-NN-<slug>.md` using the template from the reference file. Read `init-scaffolding.md` for the `active-phase.md` format template. Write `.claude/rules/active-phase.md` (ensure dir exists with `mkdir -p "$ROOT/.claude/rules"`).
 
 ### Step 8: Create _ARCHITECTURE.md
 
@@ -200,6 +155,10 @@ After scaffolding, check if the project has existing source code:
 
 **If source files found (>5 files):**
 
+Check if `/dev-scan` skill is available (`ls ~/.claude/skills/dev-scan/SKILL.md 2>/dev/null`). If not available, skip and note: "Run `/dev-scan` manually later when the skill is installed."
+
+If available, offer:
+
 ```
 Existing source code detected (<N> files).
 Run /dev-scan to create code intelligence articles (module + file articles with dependency tracking)?
@@ -228,6 +187,7 @@ Dev wiki initialized at .dev-wiki/
 - Code articles: <created by scan | scan skipped | no source code>
 
 Next steps:
+- Run /dev-plan to create your first phase and tasks
 - Run /dev-context at the start of future sessions to load project state
 - Run /dev-debrief before ending sessions to capture decisions and progress
 - Run /dev-scan anytime for deep code analysis with dependency mapping

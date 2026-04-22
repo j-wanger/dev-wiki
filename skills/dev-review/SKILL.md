@@ -140,6 +140,14 @@ Options:
 - **B) Accept:** Note accepted issues in the journal context. Tell user: "Run `/dev-debrief` to capture this session."
 - **C) Re-review:** Return to Step 1 with fresh context. Max 2 review cycles. After 2: "Recommend accepting current state and noting remaining issues for next phase."
 
+### Post-Verdict Routing
+
+After the user makes their choice, provide explicit next-step guidance based on the gate verdict:
+
+- **PASSED:** "Phase work is solid. Run `/dev-debrief` to capture this session."
+- **FIX RECOMMENDED:** "Fix HIGH+ issues first (option A), then run `/dev-debrief` when done."
+- **BLOCKED:** "Phase may need redesign. Use `/dev-adjust` to modify tasks, or mark remaining tasks `[blocked:]` and run `/dev-plan` to redesign the phase."
+
 ---
 
 ## Error Handling
@@ -148,8 +156,5 @@ Options:
 |-------|----------|
 | No dev wiki | "No dev wiki found. Run `/dev-init`." STOP. |
 | No completed tasks | "No work to review. Complete tasks first." STOP. |
-| Agent timeout | Report which reviewer timed out, present partial results. |
-| Agent failure | Skip failed reviewer, present 2/3 results with note. |
+| Subagent issue | Report failure, present partial results from remaining reviewers. |
 | Missing companion prompt | "Missing reviewer prompt files. Recreate them." STOP. |
-
-For data flow conventions that inform code review context, see dev-wiki-reference.md Section G.

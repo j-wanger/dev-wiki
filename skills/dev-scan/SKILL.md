@@ -24,6 +24,25 @@ Deep codebase analysis producing structural knowledge for the dev-wiki. Systemat
 
 ---
 
+## Auto-Detect Mode Selection
+
+After pre-checks, before Step 1, determine scan mode:
+
+1. Glob `<wiki_path>/articles/files/*.md` and `<wiki_path>/articles/modules/*.md`
+2. Check for `--full` flag in user invocation
+
+| Existing articles? | `--full` flag? | Mode |
+|---------------------|----------------|------|
+| None found | N/A | **Full scan** — run Steps 1-7 below |
+| Found | No | **Incremental refresh** — read `refresh-flow.md` |
+| Found | Yes | **Full scan** — delete existing articles first, then Steps 1-7 |
+
+### Refresh Flow (incremental, hash-based)
+
+Read `refresh-flow.md` and follow the incremental refresh protocol.
+
+---
+
 ## Scan Flow (Main Agent — Steps 1-4)
 
 Use Glob, Grep, Read tools. Do NOT use Bash for file discovery except for hash computation (`shasum`). Budget: max 30 file reads, max 150 lines each.
@@ -193,8 +212,8 @@ Read `~/.claude/skills/dev-scan/file-prompt.md` for the prompt template. Split s
 2. Glob `<wiki_path>/articles/modules/*.md` — verify count matches dispatched modules
 3. Glob `<wiki_path>/articles/files/*.md` — verify count matches dispatched files (minus skipped barrels)
 4. If any subagent failed: report which, apply successful outputs, write missing artifacts directly as fallback
-5a. **Slug-drift HARD check** (extensions per dev-wiki-reference.md Section A §Recognized Extensions; two-tier per [[wiki:two-tier-drift-classification]]): `ls <wiki_path>/articles/files/ | grep -E '-(sh|ts|py|json|yaml)\.md$'` MUST return empty. Fail-loud: `"Slug-drift detected (non-md extension suffix)."`
-5b. **Slug-drift WARN check:** `ls <wiki_path>/articles/files/ | grep -E '-md\.md$'` — list matches for human review (known false-positive class: legit basenames ending in "md" like `scaffold-claude-md.md`; verify against source path). See [[phase-19e-subagent-template-hardening-scope]], [[full-scan-over-refresh]], and [[wiki:silent-false-pass-pattern-family]] for the failure-mode family.
+5. **Slug-drift HARD check** (extensions per dev-wiki-reference.md Section A §Recognized Extensions; two-tier per [[wiki:two-tier-drift-classification]]): `ls <wiki_path>/articles/files/ | grep -E '-(sh|ts|py|json|yaml)\.md$'` MUST return empty. Fail-loud: `"Slug-drift detected (non-md extension suffix)."`
+6. **Slug-drift WARN check:** `ls <wiki_path>/articles/files/ | grep -E '-md\.md$'` — list matches for human review (known false-positive class: legit basenames ending in "md" like `scaffold-claude-md.md`; verify against source path). See [[phase-19e-subagent-template-hardening-scope]], [[full-scan-over-refresh]], and [[wiki:silent-false-pass-pattern-family]] for the failure-mode family.
 
 ---
 
@@ -204,39 +223,6 @@ Read `~/.claude/skills/dev-scan/file-prompt.md` for the prompt template. Split s
 2. **Update index.md** — add new articles to appropriate category sections
 3. **Append to log.md:** `[<ISO-timestamp>] SCAN -- N modules, M file articles, K issues (H high, M medium, L low)`
 4. **Report to user:** summary of created artifacts (module count, file count, hub modules, coupling edges, issues)
-
----
-
-## Auto-Detect Mode Selection
-
-After pre-checks, before Step 1, determine scan mode:
-
-1. Glob `<wiki_path>/articles/files/*.md` and `<wiki_path>/articles/modules/*.md`
-2. Check for `--full` flag in user invocation
-
-| Existing articles? | `--full` flag? | Mode |
-|---------------------|----------------|------|
-| None found | N/A | **Full scan** — run Steps 1-7 as described above |
-| Found | No | **Incremental refresh** — skip to Refresh Flow below |
-| Found | Yes | **Full scan** — delete existing articles first, then Steps 1-7 |
-
-### Refresh Flow (incremental, hash-based)
-
-When existing code articles are found and `--full` is NOT set:
-
-1. **Hash all source files** using batch `shasum -a 256` (same as Step 3 batch hash)
-2. **Read existing article frontmatter** — extract `path` and `content_hash` from each file article
-3. **Compare hashes:**
-   - **Stale** (hash mismatch): re-scan file, regenerate article via single file-prompt subagent
-   - **New** (file exists, no article): add to scan queue
-   - **Deleted** (article exists, file gone): remove article, update parent module article
-   - **Unchanged** (hash match): skip
-4. **Recompute module composite hashes** for affected modules. Regenerate module articles if composite changed.
-5. **Clear `.stale-queue`** — all entries are now addressed by the full hash comparison
-6. **Update index.md and log.md** with refresh summary
-7. **Report:** "Incremental refresh: N unchanged, M updated, K new, J removed"
-
-**Budget:** Refresh caps at 50 file regenerations per invocation. If >50 stale/new files detected, process 50 and report: "Processed 50 of N changes. Run `/dev-scan` again to continue." Refresh is non-interactive — Step 5 approval gate is skipped.
 
 ---
 

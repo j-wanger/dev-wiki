@@ -33,7 +33,9 @@ Also read `$WIKI/_CURRENT_STATE.md` for active phase context. **Budget:** At mos
 
 ---
 
-## Step 2: Analyze Against 7 Structured Dimensions
+## Step 2: Analyze Against 9 Structured Dimensions
+
+Dimensional analysis follows the error-analysis-first methodology ([[wiki:husain-evals-playbook]]). See `husain-eval-mapping.md` for the full 4-step framework mapping.
 
 For each dimension, extract concrete evidence from the journal/decision corpus. Do NOT fabricate patterns — only report what the data shows. If a dimension has no findings, say "No evidence in reviewed entries."
 
@@ -75,11 +77,39 @@ Cross-reference journey steps against the last 10 journal entries. This dimensio
 
 **Historical note:** Journals pre-dating Phase 25 (when journeys were defined) may have lower tool-name coverage because tool-step mapping didn't exist yet. Accept partial coverage for those phases rather than over-reporting apparent Skipped-step findings.
 
+### Dimension 9: Lifecycle Output Quality
+
+Read `~/.claude/skills/dev-retro/lifecycle-eval-rubric.md` for the full 10-criterion rubric (3 sub-dimensions: Plan Quality 4 criteria, Review Accuracy 3, Debrief Completeness 3). Grade each sub-dimension binary pass/fail per phase. Track pass rates over time to detect quality drift.
+
+---
+
+## Step 2.5: Per-Dimension Distribution Summary
+
+After scoring all 9 dimensions, compile a distribution summary table in the retro article. Per [[wiki:dimension-coverage-asymmetry]], report per-dimension scores separately — do not normalize or average.
+
+```markdown
+## Dimension Distribution
+
+| Dimension | Findings | Signal |
+|-----------|----------|--------|
+| 1. Recurring Blockers | N | high/low/none |
+| 2. Decision Reversals | N | high/low/none |
+| 3. User Corrections | N | high/low/none |
+| 4. Skill Size Trends | N over budget | high/low/none |
+| 5. Review Score Trends | avg X/10 | improving/declining/stable |
+| 6. Phase Velocity | X phases/day | accelerating/steady/slowing |
+| 7. Pattern Cascades | N chains | high/low/none |
+| 8. Operational Effectiveness | N skipped steps | high/low/none |
+| 9. Lifecycle Output Quality | N/M sub-dims PASS | high/low/none |
+```
+
+Flag dimensions with consistently low scores as systemic gaps. Flag dimensions with 100% scores as candidates for tightening or retirement.
+
 ---
 
 ## Step 3: Write Retrospective Article
 
-Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section T for the retro article template. Read Section A for slugification rules.
+Read `~/.claude/skills/dev-wiki/retro-article-template.md` for the retro article template. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section A for slugification rules.
 
 Write the article to `$WIKI/articles/journal/YYYY-MM-DD-retro-phases-N-M.md` where N and M are the first and last phase numbers covered.
 

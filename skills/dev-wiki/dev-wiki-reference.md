@@ -1,6 +1,35 @@
 # Dev Wiki Reference
 
-Shared reference material for the dev wiki skill suite (`dev-init`, `dev-plan`, `dev-debrief`, `dev-context`, `dev-adjust`, `dev-scan`, `dev-check`, `dev-review`, `dev-retro`). Skills reference specific sections by letter (A-T).
+> Last updated: 2026-04-21 by Phase 58 (Section T+R extracted to companions, intro index added)
+
+Shared reference material for the dev wiki skill suite (`dev-init`, `dev-plan`, `dev-debrief`, `dev-context`, `dev-adjust`, `dev-scan`, `dev-check`, `dev-review`, `dev-retro`). Skills reference specific sections by letter (A-V).
+
+## Section Index
+
+| Section | Title | Notes |
+|---------|-------|-------|
+| A | Slugification Algorithm | |
+| B | Size Budgets | |
+| C | Task Schema | |
+| D | Deviation & Escalation Protocols | Merged D+E (Phase 57) |
+| E | _(Merged into D)_ | Tombstone |
+| F | _CURRENT_STATE.md Template | |
+| G | _ARCHITECTURE.md Template | |
+| H | Phase Article Template | |
+| I | Decision Article Template | |
+| J | Journal Entry Templates | |
+| K | _(Reserved)_ | Skipped letter |
+| L | active-knowledge.md Specification | Cross-ref: Section M |
+| M | working-knowledge.md Specification | Cross-ref: Section L |
+| N | Module Scan Article Template | DEPRECATED — use O/P |
+| O | File Article Template | |
+| P | Module Article Template | |
+| Q | Content Hashing Specification | |
+| R | Stale Queue Specification | → `stale-queue-spec.md` |
+| S | Skill Metadata Specification | |
+| T | Retro Article Template | → `retro-article-template.md` |
+| U | Project CLAUDE.md Lifecycle | |
+| V | Developer Journey Conventions | |
 
 ---
 
@@ -141,15 +170,13 @@ See `~/.claude/skills/dev-plan/plan-reviewer-prompt.md` for the full reviewer ch
 
 ---
 
-## Section D: Escape Hatches
+## Section D: Deviation & Escalation Protocols
 
 Permitted deviations from plan (explain in commit message): **SECURITY:** Fix vulnerability immediately. **DEPENDENCY:** Do prerequisite first. **USER OVERRIDE:** Follow user, note deviation. **DISCOVERY:** Add precondition to tasks.md.
 
----
+After 3 failed attempts on a task: mark `[blocked: <what failed>]` in `tasks.md`. Ask user: `Task "<desc>" is blocked: <reason>. A) Skip B) /dev adjust C) Abort phase`. Do NOT silently skip.
 
-## Section E: Blocked Task Escalation Protocol
-
-After 3 failed attempts: mark `[blocked: <what failed>]` in `tasks.md`. Ask user: `Task "<desc>" is blocked: <reason>. A) Skip B) /dev adjust C) Abort phase`. Do NOT silently skip.
+## Section E: (Merged into Section D, Phase 57)
 
 ---
 
@@ -434,6 +461,10 @@ source: debrief | debrief-quick | hook | adjust
 
 ---
 
+## Section K: (Reserved)
+
+Section letter K was skipped during initial section numbering. Reserved for future use.
+
 ---
 
 ## Section L: active-knowledge.md Specification
@@ -522,11 +553,15 @@ Detects context drift ([[wiki:failure-mode-taxonomy]]) — stale activated knowl
 | Phase change detected | Carry forward cross-cutting facts to working-knowledge, then delete | `/dev debrief` |
 | Consistency audit | Checks S10, C9, C10, C11 | `/dev check` |
 
+**Cross-reference:** See Section M for project-scoped, usage-tracked knowledge with different lifecycle (no phase-scoping, usage-count eviction).
+
 ---
 
 ## Section M: working-knowledge.md Specification
 
 Usage-tracked knowledge activation file. Distills ad-hoc query answers into persistent Layer 2 facts with usage counters for metric-driven eviction.
+
+**Cross-reference:** See Section L for phase-scoped, plan-generated knowledge with different lifecycle (cleared on phase change, not usage-tracked).
 
 **Location:** `.claude/rules/working-knowledge.md`
 **Ownership:** Shared. Primary writer: `/wiki-query` (activation on query). Secondary writers: `/dev-debrief` (session-end decay in Step 12a, phase-boundary carry-forward in Step 12b), `/dev-plan` (cross-phase seeding). Dev-context reads only.
@@ -945,72 +980,7 @@ Configurable via `.dev-wiki/scan-config.md` (future, not in R1 scope).
 
 ## Section R: Stale Queue Specification
 
-Lightweight change-tracking mechanism. PostToolUse hooks mark changed files; `/dev-context` processes the queue at session start.
-
-### File Format
-
-**Location:** `.dev-wiki/.stale-queue`
-**Format:** One project-relative file path per line. No blank lines. Best-effort dedup on write; read-side dedup before processing.
-
-```
-src/auth/middleware.ts
-src/config/db.ts
-lib/utils/helpers.ts
-```
-
-**Hard cap:** 200 entries. If the queue exceeds 200, new entries are dropped with a warning in the hook output. **Soft warning** at 100 entries: `/dev-context` emits "Stale queue has N entries. Consider `/dev-scan --refresh`."
-
-### Write Protocol (PostToolUse hook on Edit/Write)
-
-1. Extract target file path from tool result
-2. Convert to project-relative path
-3. **Skip** if path matches exclusion patterns: Section Q exclusions + `.dev-wiki/**` + all `*.md` files
-4. **Skip** if path already present in `.stale-queue` (best-effort dedup via grep; duplicates are harmless)
-5. **Skip** if queue has >= 200 entries (hard cap)
-6. Append path to `.stale-queue`
-
-Hook fires only on `Edit` and `Write` tool calls. Does NOT fire on `Read`, `Glob`, `Grep`, or `Bash`.
-
-**Known gap — renames:** File renames via `Bash` (e.g., `mv`, `git mv`) do NOT trigger the hook. Old file articles persist with stale paths. Run `/dev-scan --refresh` after renaming files outside agent sessions. New files created outside agent sessions (e.g., `git pull`) are similarly not captured.
-
-### Read Protocol (dev-context at session start)
-
-1. If `.stale-queue` does not exist or is empty: skip
-2. Read all paths, **deduplicate**, validate each line matches `[a-zA-Z0-9_./-]+` (discard invalid lines with warning)
-3. Process first **10 entries** (FIFO order — oldest changes first; cap prevents slow startup)
-4. For each path:
-   - If file exists: recompute hash, compare to article. If stale: update `content_hash` in frontmatter. Only regenerate full article content if exports/imports changed (detected by diff).
-   - If file deleted: remove file article, update parent module article
-   - If processing fails (hash error, analysis failure): keep entry in queue for next session
-5. For each affected module: recompute composite hash, update module article if changed
-6. Remove only **successfully processed** entries from `.stale-queue`
-7. If entries remain (>10 cap or failed), keep for next session
-
-**In-session staleness:** Queue entries written during a session are NOT processed until the next session's `/dev-context`. Within a session, articles for recently-edited files may be stale. Run `/dev-scan --refresh` mid-session if immediate consistency is needed.
-
-### Lifecycle
-
-```
-Edit/Write tool call
-  → PostToolUse hook appends to .stale-queue (if source file, within caps)
-  → [session continues, more edits may add more entries]
-  
-Next session start (/dev-context)
-  → Reads .stale-queue, dedup, validate
-  → Processes first 10 entries (FIFO)
-  → Hash-only update for unchanged structure; full regeneration for changed exports/imports
-  → Clears processed entries; keeps remaining
-```
-
-### Full Refresh (bypasses queue)
-
-`/dev-scan --refresh` ignores `.stale-queue` and hashes ALL source files against ALL articles. Used when:
-- Queue exceeds soft warning (100+ entries)
-- File renames or deletions happened outside agent sessions
-- Major refactoring (many files changed via `git pull`, manual editing, CI)
-- First time setup (no articles exist yet)
-
-After full refresh, `.stale-queue` is deleted.
+> Extracted to companion. See `dev-wiki/stale-queue-spec.md`.
 
 ---
 
@@ -1053,74 +1023,7 @@ tier: complex-orchestration
 
 ## Section T: Retro Article Template
 
-Process retrospective article produced by `/dev-retro`. Analyzes journal entries and decisions to identify recurring patterns and workflow friction.
-
-### Frontmatter
-
-```yaml
----
-title: "Retrospective: Phases N-M"
-aliases: []
-category: journal
-tags: [retrospective]
-parents: []
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
-source: retro
-phases_reviewed: [N, N+1, ..., M]
----
-```
-
-### 7 Analysis Dimensions (required sections)
-
-```markdown
-## 1. Recurring Blockers
-<Blockers that appear in 2+ phases. Include phase numbers and resolution status.>
-
-## 2. Decision Reversals
-<Decisions made and later overridden or significantly revised. Why did the original not hold?>
-
-## 3. User Corrections
-<Cases where the user corrected the agent's approach. What preference or principle does this reveal?>
-
-## 4. Skill Size Trends
-<Table of skill name, current lines, tier, delta since last retro. Flag approaching/exceeding caps.>
-
-## 5. Review Score Trends
-<Average review scores across phases. Improving, declining, or stable? What dimensions score lowest?>
-
-## 6. Phase Velocity
-<Phases completed per session, tasks per phase, time-to-complete trends. Accelerating or decelerating?>
-
-## 7. Pattern Cascades
-<Failure mode chains (per [[wiki:failure-mode-taxonomy]]): did drift lead to scope creep lead to issues?>
-
-## Recommendations
-<3-5 actionable suggestions for workflow improvement, grounded in the patterns above.>
-```
-
----
-
-## Directory Structure (created by /dev-init)
-
-```
-.dev-wiki/
-  schema.md
-  _CURRENT_STATE.md
-  _ARCHITECTURE.md
-  tasks.md
-  index.md
-  log.md
-  articles/
-    phases/
-      phase-01-<slug>.md
-      ...
-    decisions/        (populated by /dev-debrief, /dev-plan)
-    journal/          (populated by /dev-debrief, /dev-context)
-    status/           (populated by /dev-scan, legacy snapshots)
-    modules/          (populated by /dev-scan, per-directory code articles)
-    files/            (populated by /dev-scan, per-file code articles)
-```
+> Extracted to companion. See `dev-wiki/retro-article-template.md`.
 
 ---
 
