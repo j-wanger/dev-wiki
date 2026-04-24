@@ -34,7 +34,7 @@ Body structure (target 20-40 lines, hard cap 60):
 - <observation> | <suggested phase-N+1 framing> | <evidence link: status article or journal section>
 ```
 
-Omit empty sections (except "What Happened" and "Artifacts Changed" are always required). The `## Soft Observations / Phase N+1 Candidates` section is **OPTIONAL** — populate when the session produced a validation-status article OR surfaced uncovered patterns. Existing journals without this section remain valid (it is purely additive). See [[wiki:refinement-phase-pattern]] for how downstream phases use this section as their candidate source.
+Omit empty sections (except "What Happened" and "Artifacts Changed" are always required). The `## Soft Observations / Phase N+1 Candidates` section is **OPTIONAL** — populate when the session produced a validation-status article OR surfaced uncovered patterns. Existing journals without this section remain valid (it is purely additive). Downstream phases use this section as their refinement-phase candidate source.
 
 ### Mechanical Journal (from /dev-context breadcrumb processing)
 

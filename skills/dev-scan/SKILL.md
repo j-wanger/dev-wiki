@@ -212,8 +212,8 @@ Read `~/.claude/skills/dev-scan/file-prompt.md` for the prompt template. Split s
 2. Glob `<wiki_path>/articles/modules/*.md` — verify count matches dispatched modules
 3. Glob `<wiki_path>/articles/files/*.md` — verify count matches dispatched files (minus skipped barrels)
 4. If any subagent failed: report which, apply successful outputs, write missing artifacts directly as fallback
-5. **Slug-drift HARD check** (extensions per `~/.claude/skills/dev-wiki/slugification.md` §Recognized Extensions; two-tier per [[wiki:two-tier-drift-classification]]): `ls <wiki_path>/articles/files/ | grep -E '-(sh|ts|py|json|yaml)\.md$'` MUST return empty. Fail-loud: `"Slug-drift detected (non-md extension suffix)."`
-6. **Slug-drift WARN check:** `ls <wiki_path>/articles/files/ | grep -E '-md\.md$'` — list matches for human review (known false-positive class: legit basenames ending in "md" like `scaffold-claude-md.md`; verify against source path). See [[phase-19e-subagent-template-hardening-scope]], [[full-scan-over-refresh]], and [[wiki:silent-false-pass-pattern-family]] for the failure-mode family.
+5. **Slug-drift HARD check** (extensions per `~/.claude/skills/dev-wiki/slugification.md` §Recognized Extensions; HARD = unambiguous, fail-loud): `ls <wiki_path>/articles/files/ | grep -E '-(sh|ts|py|json|yaml)\.md$'` MUST return empty. Fail-loud: `"Slug-drift detected (non-md extension suffix)."`
+6. **Slug-drift WARN check:** `ls <wiki_path>/articles/files/ | grep -E '-md\.md$'` — list matches for human review (known false-positive class: legit basenames ending in "md" like `scaffold-claude-md.md`; verify against source path). See [[phase-19e-subagent-template-hardening-scope]] and [[full-scan-over-refresh]] for the failure-mode family (criteria that always pass mask real failures).
 
 ---
 

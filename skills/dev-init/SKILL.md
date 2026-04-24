@@ -64,7 +64,7 @@ ROOT="<project_root>"
 mkdir -p "$ROOT/.dev-wiki/articles/phases" "$ROOT/.dev-wiki/articles/decisions" "$ROOT/.dev-wiki/articles/journal" "$ROOT/.dev-wiki/articles/status" "$ROOT/.dev-wiki/articles/modules" "$ROOT/.dev-wiki/articles/files"
 ```
 
-The canonical `.dev-wiki/` directory layout is: `articles/{phases,decisions,journal,status,modules,files}/`, plus `_CURRENT_STATE.md`, `_ARCHITECTURE.md`, `tasks.md`, `schema.md`, `config.md`, `index.md`, `log.md`.
+The canonical `.dev-wiki/` directory layout is: `articles/{phases,decisions,journal,status,modules,files}/`, plus `AGENTS.md`, `_CURRENT_STATE.md`, `_ARCHITECTURE.md`, `tasks.md`, `schema.md`, `config.md`, `index.md`, `log.md`.
 
 ### Step 6: Create schema.md
 
@@ -144,6 +144,10 @@ List all created articles organized by category and hierarchy with `[[slug|title
 
 [<ISO-timestamp>] INIT -- dev wiki bootstrapped, N phase articles, git: yes|no
 ```
+
+### Step 12.5: Create AGENTS.md
+
+Copy the AGENTS.md template from `~/.claude/skills/dev-init/templates/AGENTS.md` to `$ROOT/.dev-wiki/AGENTS.md`. This is the portable session-start protocol that any agent can read to auto-load project state.
 
 ### Step 13: Detect Existing Source Code and Offer Scan
 

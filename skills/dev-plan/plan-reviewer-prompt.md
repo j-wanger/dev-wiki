@@ -25,10 +25,10 @@ Every task MUST have ALL enriched fields:
 - Description (what it accomplishes)
 - TDD cycle: RED (test to write + expected failure), GREEN (implementation), REFACTOR (cleanup)
 - `scope:` file globs
-- `success:` testable criterion (must be verifiable by running a command). **Adversarial litmus** per [[wiki:falsifiability-pattern]]: for each `success:` criterion, could a BAD implementation pass it? If yes, the criterion is too vague — flag as MEDIUM.
+- `success:` testable criterion (must be verifiable by running a command). **Adversarial litmus:** for each `success:` criterion, could a BAD implementation pass it? If yes, the criterion is too vague — flag as MEDIUM.
 - `size:` XS, S, M, or L
 
-**FAIL** any task missing a required field. Flag vague criteria. **EOF-fixture rule:** range/parser/section-extraction tasks (awk ranges, sed boundaries, regex spans, AST walks) MUST include an EOF-equivalent fixture in REFACTOR — see [[wiki:awk-section-extraction-state-flag]].
+**FAIL** any task missing a required field. Flag vague criteria. **EOF-fixture rule:** range/parser/section-extraction tasks (awk ranges, sed boundaries, regex spans, AST walks) MUST include an EOF-equivalent fixture in REFACTOR — use a state-flag awk pattern (not range syntax) to avoid EOF boundary bugs.
 
 ### 3. Exit Criteria Coverage (Bidirectional)
 

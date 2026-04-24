@@ -42,7 +42,7 @@ Project CLAUDE.md has two kinds of content. Refresh MUST NOT touch human-authore
 
 ### Size Guard
 
-Per [[wiki:harness-composition-playbook]] invariant #2, project CLAUDE.md MUST stay ≤80 lines after any refresh. If a refresh would push past 80 lines, `/dev-debrief` MUST warn: "CLAUDE.md refresh would exceed 80-line cap. Skipping auto-refresh; consider manual edit to trim." and skip the refresh.
+Project CLAUDE.md MUST stay ≤80 lines after any refresh (harness composition invariant). If a refresh would push past 80 lines, `/dev-debrief` MUST warn: "CLAUDE.md refresh would exceed 80-line cap. Skipping auto-refresh; consider manual edit to trim." and skip the refresh.
 
 ### Lifecycle Stages
 

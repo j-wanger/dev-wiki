@@ -49,9 +49,9 @@ Success criteria are the primary quality lever — they are spec-derived (writte
 | **Tier 1: Referential** | Cross-references, link integrity, imports | `grep -q`, custom link checks | Files with cross-references or dependencies |
 | **Tier 2: Behavioral** | Functional correctness, test pass, no regressions | test runners, bash assertions | Code changes, complex logic |
 
-**Falsifiability rule:** Every success criterion must be falsifiable — construct a plausible bad output that would FAIL the criterion. If you cannot, the criterion is too vague. See [[wiki:falsifiability-pattern]].
+**Falsifiability rule:** Every success criterion must be falsifiable — construct a plausible bad output that would FAIL the criterion. If you cannot, the criterion is too vague.
 
-**Prefer structure-aware tools over grep** for structured data: `yq` for YAML frontmatter, `jq` for JSON config. Grep is line-bound and cannot validate multi-line structures (see [[wiki:verification-for-declarative-tasks]]).
+**Prefer structure-aware tools over grep** for structured data: `yq` for YAML frontmatter, `jq` for JSON config. Grep is line-bound and cannot validate multi-line structures — use three-layer verification (structural/referential/behavioral) for non-code outputs.
 
 **Compose multiple tiers** with `&&` — a criterion that checks structural validity AND behavioral correctness catches more failures than either alone.
 

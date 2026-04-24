@@ -10,7 +10,7 @@ The canonical template is defined in this file — see the Per-File Article sect
 
 ### Slug Normalization
 
-Strip any file extension (see `~/.claude/skills/dev-wiki/slugification.md` §Recognized Extensions) BEFORE applying the path-to-slug rules from that file. The slug must NOT contain the source extension as a suffix. Retaining it is a [[wiki:silent-false-pass-pattern-family]] instance (slug-extension-drift).
+Strip any file extension (see `~/.claude/skills/dev-wiki/slugification.md` §Recognized Extensions) BEFORE applying the path-to-slug rules from that file. The slug must NOT contain the source extension as a suffix. Retaining it is a silent-false-pass instance (slug-extension-drift) — a criterion that always passes, masking real failures.
 
 Worked example: `~/.claude/hooks/session-start.sh` → `claude-hooks-session-start` (correct) — NOT `claude-hooks-session-start-sh` (incorrect: retains extension).
 

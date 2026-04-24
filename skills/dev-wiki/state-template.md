@@ -71,4 +71,4 @@ Section-pivoted aggregate view. The per-skill `## Section Ownership` blocks in c
 | Session Journal (last 5) | dev-debrief (full + quick modes; keeps last 5) | — |
 | Cross-References | dev-debrief (full mode rewrite) | — |
 
-**Drift-prevention contract.** When a SKILL.md `## Section Ownership` block adds, removes, or reassigns an owned section, edit that SKILL.md first; this table second. Reverse order risks silent paired-enumeration drift per [[wiki:bidirectional-update-contract]] cousin reasoning. Single source of truth: SKILL.md blocks.
+**Drift-prevention contract.** When a SKILL.md `## Section Ownership` block adds, removes, or reassigns an owned section, edit that SKILL.md first; this table second. Reverse order risks silent paired-enumeration drift — always update the authoritative source first, then the derived view. Single source of truth: SKILL.md blocks.

@@ -10,7 +10,7 @@ The canonical template is defined in this file — see the Per-Module Article se
 
 ### Slug Normalization
 
-Strip trailing `/` from directory path, strip any file extension if the path includes a file component (see `~/.claude/skills/dev-wiki/slugification.md` §Recognized Extensions), THEN apply the path-to-slug rules from that file. The slug must NOT contain the source extension or trailing artifacts. Retaining them is a [[wiki:silent-false-pass-pattern-family]] instance (slug-extension-drift).
+Strip trailing `/` from directory path, strip any file extension if the path includes a file component (see `~/.claude/skills/dev-wiki/slugification.md` §Recognized Extensions), THEN apply the path-to-slug rules from that file. The slug must NOT contain the source extension or trailing artifacts. Retaining them is a silent-false-pass instance (slug-extension-drift) — a criterion that always passes, masking real failures.
 
 Worked example: `~/.claude/skills/dev-harness/` → `claude-skills-dev-harness` (correct) — NOT with trailing dash or `-dir` suffix.
 
