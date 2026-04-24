@@ -1,6 +1,6 @@
 # Post-Implementation Self-Check Checklist
 
-Deterministic checks run after all phase tasks are marked [x], before /dev-review. Each check is a concrete command or procedure — no subjective judgement.
+Deterministic checks run after all phase tasks are marked [x], before /dev-review. For S/M Lite phases, self-check IS the review gate (dev-review passes through). Each check is a concrete command or procedure — no subjective judgement.
 
 ## 0. Checklist Hygiene (conditional)
 
@@ -79,6 +79,6 @@ For hooks/enforcement files modified alongside ceremony-aware skills:
 **Skip:** if project has <10 source files OR no `.dev-wiki/articles/files/` directory exists.
 
 For each scope file (created/modified, non-excluded per `dependency-registration-spec.md`):
-- Verify file article exists: Glob `.dev-wiki/articles/files/<path-slug>.md` (path-slug per Section A of dev-wiki-reference.md).
+- Verify file article exists: Glob `.dev-wiki/articles/files/<path-slug>.md` (path-slug per `~/.claude/skills/dev-wiki/slugification.md`).
 - Bidirectional check: if file A's `imports` includes path B, read B's article and verify `imported_by` includes A's path. Flag mismatches.
 - Coupling nexus: if any scope file has `imports` ≥5 AND `imported_by` ≥5, note as refactor candidate in phase journal soft observations.

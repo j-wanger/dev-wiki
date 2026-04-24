@@ -36,7 +36,7 @@ Extract resource identifiers (file paths, table names, env var names) where infe
 ### 2. Create or Update File Article
 
 - **Article exists** (`articles/files/<path-slug>.md`): Update `content_hash`, `exports`, `imports`, `data_reads`, `data_writes` (per-field: heuristic fills only absent fields — manual entries are authoritative). Preserve `imported_by`, body content.
-- **Article does not exist**: Create minimal article per Section O template:
+- **Article does not exist**: Create minimal article per `~/.claude/skills/dev-scan/file-prompt.md` template:
   - Frontmatter: path, content_hash (shasum first 16 hex), exports, imports, `imported_by: []`, `data_reads: []`, `data_writes: []`
   - Body: 1-2 sentence purpose + `## Exports` list. Omit Dependents/Key Logic (populated later).
 

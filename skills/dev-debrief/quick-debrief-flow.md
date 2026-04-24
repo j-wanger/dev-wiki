@@ -6,7 +6,7 @@ Companion to dev-debrief SKILL.md. Contains the full quick-debrief procedure (QD
 Use the Read tool on `$WIKI/tasks.md`. Cross-reference with session buffer commits and conversation to mark completed tasks `[x]`. Add any discovered tasks.
 
 ### QD Step 2: Append 3-Line Journal Entry
-Create a minimal journal entry at `$WIKI/articles/journal/<today>-<slug>.md`. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section J for the quick journal template and Section A for the slugification algorithm.
+Create a minimal journal entry at `$WIKI/articles/journal/<today>-<slug>.md`. Read `~/.claude/skills/dev-wiki/journal-templates.md` for the quick journal template and `~/.claude/skills/dev-wiki/slugification.md` for the slugification algorithm.
 
 ### QD Step 3: Refresh _CURRENT_STATE.md Next Action
 Use the Read tool on `$WIKI/_CURRENT_STATE.md`. Update ONLY `## Recommended Next Action` and the `> Last updated` timestamp. Do not rewrite the entire file.

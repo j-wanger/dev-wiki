@@ -12,9 +12,9 @@ Exploration steps (wiki retrieval, scope analysis, knowledge completeness) stay 
 
 **Per-phase override:** Phase article frontmatter `ceremony: lite` overrides project default for that phase only.
 
-**Precedence:** Phase frontmatter > config.md > default (standard).
+**Precedence:** Phase frontmatter > config.md > default (lite).
 
-**Graceful degradation:** If neither config.md nor phase frontmatter exists, default to `standard`. Skills must not fail on missing config.
+**Graceful degradation:** If neither config.md nor phase frontmatter exists, default to `lite`. Skills must not fail on missing config. Use `ceremony: standard` in config.md or phase frontmatter for complex/multi-day work.
 
 ## Level Definitions
 
@@ -107,6 +107,6 @@ Core journal capture always runs — it is the exploration (capturing what happe
 
 | Error | Response |
 |-------|----------|
-| config.md missing | Default to standard. Do not warn. |
-| config.md has invalid ceremony value | Warn: "Unknown ceremony level '<value>'. Defaulting to standard." |
+| config.md missing | Default to lite. Do not warn. |
+| config.md has invalid ceremony value | Warn: "Unknown ceremony level '<value>'. Defaulting to lite." |
 | Phase frontmatter `ceremony:` not lite or standard | Ignore frontmatter, use config.md or default. |

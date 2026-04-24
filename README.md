@@ -4,12 +4,11 @@ A phase-based project lifecycle system for [Claude Code](https://docs.anthropic.
 
 ## What It Does
 
-- **Phase planning** with iterative knowledge retrieval, approach review, and plan review gates
-- **Task tracking** with enriched TDD cycles (RED/GREEN/REFACTOR/VERIFY) and success criteria
+- **Phase planning** with knowledge retrieval, approach review, and plan review gates
+- **Task tracking** with TDD cycles (RED/GREEN/REFACTOR/VERIFY) and testable success criteria
 - **Decision capture** extracted from conversations with context, rationale, and consequences
 - **Session continuity** via breadcrumb files and compaction anchors that survive context window resets
-- **Automated review** with 3 parallel reviewer subagents (code, artifact, knowledge)
-- **Retrospectives** analyzing patterns across phases
+- **Integrated review** with size-gated reviewer dispatch during debrief
 - **Architecture scanning** with code intelligence articles per file and module
 - **Harness auditing** for your Claude Code configuration health
 
@@ -95,15 +94,11 @@ This bootstraps the `.dev-wiki/` directory in your project.
 /dev-init
 ```
 
-Creates `.dev-wiki/` with `_CURRENT_STATE.md`, `_ARCHITECTURE.md`, `tasks.md`, `schema.md`, `index.md`, `log.md`, and initial phase articles. Also scaffolds a project-level `CLAUDE.md` if one doesn't exist.
+Creates `.dev-wiki/` with `_CURRENT_STATE.md`, `_ARCHITECTURE.md`, `tasks.md`, `schema.md`, `index.md`, `log.md`, `AGENTS.md`, and initial phase articles. Also scaffolds a project-level `CLAUDE.md` if one doesn't exist.
 
-### Start a session
+### Session start (automatic)
 
-```
-/dev-context
-```
-
-Loads project state, processes breadcrumbs from prior sessions, checks for staleness, detects planning needs, and emits a context summary. **Run this at the start of every session.**
+The `session-start.sh` hook detects `.dev-wiki/` and loads project state via `AGENTS.md` automatically. No command needed — just start a Claude Code session.
 
 ### Plan a phase
 
@@ -111,19 +106,11 @@ Loads project state, processes breadcrumbs from prior sessions, checks for stale
 /dev-plan
 ```
 
-Retrieves knowledge from wikis, asks targeted questions, proposes an approach with review gates, drafts enriched tasks, and writes everything to the dev wiki. Every phase goes through this — even trivial ones.
+Retrieves knowledge from wikis, asks targeted questions, proposes an approach with review gates, drafts enriched tasks, and writes everything to the dev wiki. Every phase goes through this — even trivial ones. Supports two ceremony levels: **lite** (default, streamlined) and **standard** (full review gates for complex work).
 
 ### Implement
 
 Follow the TDD cycle embedded in each task: RED (verify test fails) -> GREEN (implement) -> REFACTOR -> VERIFY (run success criteria). Mark `[x]` in `tasks.md` when done.
-
-### Review
-
-```
-/dev-review
-```
-
-Dispatches 3 parallel reviewers (code quality, artifact consistency, knowledge alignment). Presents a gate report with score and options to fix, accept, or re-review.
 
 ### End a session
 
@@ -131,22 +118,18 @@ Dispatches 3 parallel reviewers (code quality, artifact consistency, knowledge a
 /dev-debrief
 ```
 
-Auto-detects session significance. Full mode: extracts decisions, creates journal entry, refreshes all living documents. Quick mode: updates tasks and next action. **Run this before ending any meaningful session.**
+Auto-detects session significance. Full mode: extracts decisions, creates journal entry, runs size-gated review, checks for retro-worthy patterns, refreshes all living documents. Quick mode: updates tasks and next action. **Run this before ending any meaningful session.**
 
 ## All Commands
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
 | `/dev-init` | Bootstrap `.dev-wiki/` | First time setup for a project |
-| `/dev-context` | Load project state | Start of every session |
 | `/dev-plan` | Plan a phase | When phase needs planning (0 open tasks) |
-| `/dev-review` | Review completed work | After all phase tasks are done |
-| `/dev-debrief` | Capture session work | Before ending a session |
-| `/dev-adjust` | Mid-phase replanning | When a task is blocked or approach is wrong |
+| `/dev-debrief` | Capture session work | Before ending a session (includes review + retro) |
 | `/dev-check` | Validate wiki integrity | When state feels stale or after long breaks |
 | `/dev-scan` | Scan codebase structure | When `_ARCHITECTURE.md` is shallow or stale |
 | `/dev-harness` | Audit Claude Code config | Periodic harness health check |
-| `/dev-retro` | Retrospective analysis | Every 5-10 phases |
 
 ## Development Lifecycle
 
@@ -154,7 +137,7 @@ Auto-detects session significance. Full mode: extracts decisions, creates journa
 /dev-init (once)
     |
     v
-/dev-context (every session start)
+session start (automatic via AGENTS.md)
     |
     v
 /dev-plan (per phase)
@@ -171,18 +154,12 @@ implement (per task)
     |  - VERIFY: run success criteria
     |  - mark [x] in tasks.md
     v
-/dev-review (per phase)
-    |  - 3 parallel reviewers
-    |  - fix or accept findings
-    v
 /dev-debrief (every session end)
     |  - extract decisions
     |  - write journal
+    |  - size-gated review (L/Standard phases)
+    |  - retro check (flags patterns)
     |  - refresh living documents
-    v
-/dev-retro (every 5-10 phases)
-    |  - analyze patterns
-    |  - surface recommendations
     v
 next /dev-plan ...
 ```
@@ -200,11 +177,14 @@ your-project/
     schema.md            # Project identity for the dev wiki
     index.md             # Article index by category
     log.md               # Chronological event log
+    AGENTS.md            # Session-start protocol (auto-loads state, processes breadcrumbs)
     articles/
       phases/            # One article per phase (objective, scope, exit criteria)
       decisions/         # Extracted decisions (context, choice, consequences)
       journal/           # Session journals (what happened, problems, artifacts)
       status/            # Codebase snapshots and scan results
+      modules/           # Per-directory code intelligence articles
+      files/             # Per-file code intelligence articles
   .claude/
     rules/
       active-phase.md    # Compaction anchor: survives context resets
@@ -217,7 +197,7 @@ your-project/
 
 The dev-wiki system uses **breadcrumb files** and **compaction anchors** to maintain continuity:
 
-- **Breadcrumbs** (`.session-end`, `.pending-commit`, `.session-buffer`): Written by hooks during a session, processed by `/dev-context` at the next session start. They bridge the gap between sessions.
+- **Breadcrumbs** (`.session-end`, `.pending-commit`, `.stale-queue`): Written by hooks during a session, processed at the next session start via `AGENTS.md`. They bridge the gap between sessions.
 - **Compaction anchors** (`active-phase.md`, `active-knowledge.md`): Small files in `.claude/rules/` that Claude Code loads into every message. When the context window compacts (drops older messages), these anchors restore phase context automatically.
 
 ## Hooks
@@ -230,9 +210,26 @@ The dev-wiki system uses **breadcrumb files** and **compaction anchors** to main
 | `stale-queue.sh` | PostToolUse (Write/Edit) | Tracks modified files for incremental architecture refresh |
 | `dev-wiki-scope-check.sh` | PostToolUse (Write/Edit) | Warns if editing files outside the active task's scope |
 
+## Ceremony Levels
+
+The planning process supports two ceremony levels, configured in `.dev-wiki/config.md`:
+
+- **Lite** (default): Streamlined planning — 0-1 user questions, simplified task schema, single approval gate. Good for most phases.
+- **Standard**: Full ceremony — iterative knowledge retrieval, contradiction checks, approach + plan reviewer subagents, dual approval gates. Use for complex or high-risk work.
+
+Set in `.dev-wiki/config.md`:
+```
+ceremony: lite
+```
+
+Override per-phase in the phase article frontmatter:
+```yaml
+ceremony: standard
+```
+
 ## Integration with Knowledge Wikis
 
-The dev-wiki system optionally integrates with **knowledge wikis** (separate domain knowledge bases). During `/dev-plan`, it retrieves relevant articles from registered wikis to inform phase planning. This requires the [project-wiki skill suite](https://github.com/Recito) (separate package) and a `~/.claude/wikis.json` registry.
+The dev-wiki system optionally integrates with **knowledge wikis** (separate domain knowledge bases). During `/dev-plan`, it retrieves relevant articles from registered wikis to inform phase planning. This requires the knowledge-wiki skill suite (separate package) and a `~/.claude/wikis.json` registry.
 
 Without knowledge wikis, the dev-wiki suite works standalone — it just won't have domain knowledge to draw from during planning.
 
@@ -240,21 +237,28 @@ Without knowledge wikis, the dev-wiki suite works standalone — it just won't h
 
 | Directory | Files | Purpose |
 |-----------|-------|---------|
-| `skills/dev-wiki/` | 4 | Router + shared reference hub (1189 lines) + journey conventions + session context |
-| `skills/dev-plan/` | 5 | Phase planning + approach reviewer + plan reviewer + implementation guide + iterative retrieval spec |
-| `skills/dev-context/` | 1 | Session state loading |
-| `skills/dev-debrief/` | 4 | Session capture + active-knowledge transition + architecture staleness + CLAUDE.md refresh |
-| `skills/dev-review/` | 4 | Review gate + 3 reviewer prompts (code, artifact, knowledge) |
-| `skills/dev-scan/` | 6 | Codebase scanning + architecture/file/module prompts + Python-specific checks |
-| `skills/dev-check/` | 1 | Wiki integrity validation (38+ checks) |
-| `skills/dev-adjust/` | 1 | Mid-phase replanning |
-| `skills/dev-init/` | 3 | Project bootstrapping + CLAUDE.md scaffold template |
-| `skills/dev-harness/` | 6 | Harness audit + 5 H-check companions |
-| `skills/dev-retro/` | 1 | Retrospective analysis |
+| `skills/dev-wiki/` | 16 | Router + shared companions (templates, specs, conventions) |
+| `skills/dev-plan/` | 10 | Phase planning + reviewers + ceremony levels + task schema |
+| `skills/dev-debrief/` | 9 | Session capture + review gate + retro check + knowledge transition |
+| `skills/dev-scan/` | 8 | Codebase scanning + architecture/file/module prompts |
+| `skills/dev-harness/` | 7 | Harness audit + 6 H-check companions |
+| `skills/dev-init/` | 5 | Project bootstrapping + templates (CLAUDE.md, AGENTS.md) |
+| `skills/dev-check/` | 1 | Wiki integrity validation (9 core checks) |
 | `hooks/` | 5 | Session lifecycle hooks |
 | `rules/` | 1 | Implementation discipline (TDD workflow, blocked-task escalation, escape hatches) |
 
-**Total: 42 files**
+**Total: 62 files**
+
+## Changes from v1
+
+v2 (Phases 78-86) simplified the system based on an external code review:
+
+- **11 skills → 7**: Eliminated `dev-adjust` (just edit tasks.md), `dev-context` (replaced by AGENTS.md auto-load), `dev-review` and `dev-retro` (folded into `/dev-debrief`)
+- **Reference hub eliminated**: 1,092-line monolithic reference file split into per-skill companions
+- **dev-check simplified**: 43 checks → 9 high-signal core checks (144 lines)
+- **Ceremony defaults to lite**: Standard ceremony opt-in for complex phases
+- **Scope-check hook upgraded**: File-path-aware scope matching against active task globs
+- **Net reduction**: -2,300+ lines removed
 
 ## License
 

@@ -61,7 +61,7 @@ This sequence fully restores working context. The agent then states: "Resuming t
 | Error | Response |
 |-------|----------|
 | No `.dev-wiki/` | "Run `/dev init` first." STOP. |
-| Open tasks exist | "Phase N has X open tasks. Continue or `/dev adjust`." STOP. |
+| Open tasks exist | "Phase N has X open tasks. Continue implementation." STOP. |
 | User rejects approach | Revise and re-present (max 3 rounds). |
 | No phases defined | "Run `/dev init`." STOP. |
 | Approach reviewer timeout | Proceed without critique. Warn: "Approach reviewer unavailable." |

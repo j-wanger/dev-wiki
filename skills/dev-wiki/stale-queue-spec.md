@@ -19,7 +19,7 @@ lib/utils/helpers.ts
 
 1. Extract target file path from tool result
 2. Convert to project-relative path
-3. **Skip** if path matches exclusion patterns: Section Q exclusions + `.dev-wiki/**` + all `*.md` files
+3. **Skip** if path matches exclusion patterns: `~/.claude/skills/dev-scan/content-hashing.md` exclusions + `.dev-wiki/**` + all `*.md` files
 4. **Skip** if path already present in `.stale-queue` (best-effort dedup via grep; duplicates are harmless)
 5. **Skip** if queue has >= 200 entries (hard cap)
 6. Append path to `.stale-queue`

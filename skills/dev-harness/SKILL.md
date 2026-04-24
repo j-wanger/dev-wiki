@@ -76,7 +76,7 @@ Aggregate: PASS | DRIFT DETECTED (N findings: X CRITICAL, Y HIGH, Z MEDIUM)
 ### H2: ...
 ```
 
-If any CRITICAL findings: tell user "Run `/dev-adjust` or fix manually before proceeding to next phase work." If only MEDIUM/HIGH: report as informational.
+If any CRITICAL findings: tell user "Fix manually before proceeding to next phase work." If only MEDIUM/HIGH: report as informational.
 
 This skill is read-only. It does NOT auto-fix. All remediation is up to the user (or a follow-up planning skill).
 

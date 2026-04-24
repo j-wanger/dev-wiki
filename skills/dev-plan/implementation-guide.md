@@ -6,9 +6,9 @@ Extracted from dev-plan Step 10. Read when the user chooses option A or C in Ste
 
 Follow TDD cycle embedded in each task: RED (write test, verify fail) -> GREEN (implement, verify pass) -> REFACTOR -> VERIFY (run `success:` field commands; iterate if fail; if no `success:` field, emit "No success: field — verification skipped"). Mark `[x]` in `tasks.md` only after VERIFY passes, before moving to next task.
 
-Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section D for deviation and escalation protocols.
+**Deviation & Escalation Protocols:** Permitted deviations from plan (explain in commit message): **SECURITY** (fix vulnerability immediately), **DEPENDENCY** (do prerequisite first), **USER OVERRIDE** (follow user, note deviation), **DISCOVERY** (add precondition to tasks.md). After 3 failed attempts on a task: mark `[blocked: <what failed>]` in `tasks.md`. Ask user: skip or abort phase. Do NOT silently skip.
 
-**After all tasks marked [x]:** Run the Post-Implementation Self-Check (below) before proceeding to `/dev-review`.
+**After all tasks marked [x]:** Run the Post-Implementation Self-Check (below) before proceeding to `/dev-debrief`.
 
 ## Option C: Subagent-Driven Parallel
 
@@ -38,7 +38,7 @@ Skip this section if the project has no `.claude/evals/` directory.
 
 ## Post-Implementation Self-Check *(Lite: simplified — categories 1-2 only)*
 
-Runs after the last task in the active phase is marked `[x]`, before `/dev-review`. Purpose: catch mechanical and cross-layer issues that per-task VERIFY cannot detect (cross-file consistency, metadata completeness, convention alignment).
+Runs after the last task in the active phase is marked `[x]`, before `/dev-debrief`. Purpose: catch mechanical and cross-layer issues that per-task VERIFY cannot detect (cross-file consistency, metadata completeness, convention alignment).
 
 ### Procedure
 
@@ -53,7 +53,7 @@ Runs after the last task in the active phase is marked `[x]`, before `/dev-revie
 1. Fix each finding inline using Edit tool.
 2. Re-run the checklist category that had findings.
 3. Repeat until clean OR 3 fix attempts per finding exhausted.
-4. After 3 failed attempts on a finding: surface to user — `"Self-check finding unfixable after 3 attempts: <finding>. Options: (a) fix manually, (b) accept with acknowledged gap, (c) /dev-adjust."` Do NOT silently drop findings.
+4. After 3 failed attempts on a finding: surface to user — `"Self-check finding unfixable after 3 attempts: <finding>. Options: (a) fix manually, (b) accept with acknowledged gap."` Do NOT silently drop findings.
 
 **Option C (report to user):**
 1. Collect all findings across all categories.
@@ -62,9 +62,9 @@ Runs after the last task in the active phase is marked `[x]`, before `/dev-revie
 
 ### When Self-Check Passes
 
-Report: `"Self-check clean (N categories, M files checked). Ready for /dev-review."` Proceed to `/dev-review`.
+Report: `"Self-check clean (N categories, M files checked). Ready for /dev-debrief."` Proceed to `/dev-debrief` (S/M Lite phases: pass-through; L/Standard phases: reviewer dispatch).
 
 ### Skip Conditions
 
 - Phase has 0 completed tasks (nothing to check).
-- User explicitly requests skip: `"Skipping self-check per user request."` Proceed to `/dev-review`.
+- User explicitly requests skip: `"Skipping self-check per user request."` Proceed to `/dev-debrief`.

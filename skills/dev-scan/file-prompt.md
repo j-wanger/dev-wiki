@@ -1,16 +1,16 @@
 # File Article Synthesis Prompt
 
-Subagent prompt template for creating per-file code articles using Section O format. Read by dev-scan SKILL.md Step 6, Subagent C. Dispatched in batches of ~20 files per subagent.
+Subagent prompt template for creating per-file code articles. This file is the canonical template source. Read by dev-scan SKILL.md Step 6, Subagent C. Dispatched in batches of ~20 files per subagent.
 
 ## Prompt
 
 Create one file article per source file in `<WIKI_PATH>/articles/files/` (directory will be created on first Write).
 
-The canonical template is in Section O of `~/.claude/skills/dev-wiki/dev-wiki-reference.md` (read only if ambiguity arises). Path-slugs use 64-character truncation per Section A.
+The canonical template is defined in this file — see the Per-File Article section below. Path-slugs use 64-character truncation per `~/.claude/skills/dev-wiki/slugification.md`.
 
 ### Slug Normalization
 
-Strip any file extension (see `~/.claude/skills/dev-wiki/dev-wiki-reference.md` §Recognized Extensions) BEFORE applying Section A's path-to-slug rules. The slug must NOT contain the source extension as a suffix. Retaining it is a [[wiki:silent-false-pass-pattern-family]] instance (slug-extension-drift).
+Strip any file extension (see `~/.claude/skills/dev-wiki/slugification.md` §Recognized Extensions) BEFORE applying the path-to-slug rules from that file. The slug must NOT contain the source extension as a suffix. Retaining it is a [[wiki:silent-false-pass-pattern-family]] instance (slug-extension-drift).
 
 Worked example: `~/.claude/hooks/session-start.sh` → `claude-hooks-session-start` (correct) — NOT `claude-hooks-session-start-sh` (incorrect: retains extension).
 
@@ -28,7 +28,7 @@ Parallel subagents share this convention; verify your slugs against the worked e
 
 For each file in the batch, create: `<WIKI_PATH>/articles/files/<path-slug>.md`
 
-The `<path-slug>` is derived from the file path using Section A path-to-slug rules (e.g., `src/auth/middleware.ts` -> `src-auth-middleware`).
+The `<path-slug>` is derived from the file path using the path-to-slug rules in `~/.claude/skills/dev-wiki/slugification.md` (e.g., `src/auth/middleware.ts` -> `src-auth-middleware`).
 
 Frontmatter:
 
@@ -50,7 +50,7 @@ imports: ["<project-relative-path>", ...]
 imported_by: ["<project-relative-path>", ...]
 data_reads: []
 data_writes: []
-# generated: true    (add only for build output files; skips staleness checks per Section Q)
+# generated: true    (add only for build output files; skips staleness checks per `~/.claude/skills/dev-scan/content-hashing.md`)
 ---
 ```
 
@@ -63,7 +63,7 @@ Begin the article body with `# <project-relative-path>` (H1 heading) followed by
 
 ### Data I/O Extraction
 
-Populate `data_reads:` and `data_writes:` frontmatter fields by scanning each source file for data dependencies beyond code imports. These fields are OPTIONAL per Section O — leave as empty `[]` when no data dependencies are detectable.
+Populate `data_reads:` and `data_writes:` frontmatter fields by scanning each source file for data dependencies beyond code imports. These fields are OPTIONAL — leave as empty `[]` when no data dependencies are detectable.
 
 **Detection heuristics** (scan for these patterns in the source):
 - **File I/O:** open/read/write calls, path references to config files, data files, output artifacts
@@ -80,13 +80,13 @@ For declarative files (Markdown, YAML config, type definitions) with no runtime 
 
 - `exports` frontmatter: bare names ONLY (e.g., `[validateToken, refreshToken]`). Signatures go in body.
 - `imports`/`imported_by` frontmatter: project-relative paths, NOT source-relative.
-- If a dependency target has no file article (excluded by Section Q), render as plain `` `<path>` `` not wiki-link.
+- If a dependency target has no file article (excluded per `~/.claude/skills/dev-scan/content-hashing.md` exclusion patterns), render as plain `` `<path>` `` not wiki-link.
 - Files under 5 lines that are purely re-exports (barrel files): skip, document in parent module article instead.
 - Do NOT include function/method bodies in Key Logic — summarize the algorithm only.
-- Do NOT create articles for files matching Section Q exclusion patterns.
+- Do NOT create articles for files matching the exclusion patterns in `~/.claude/skills/dev-scan/content-hashing.md`.
 - Do NOT scan the codebase to populate `imported_by` — use only the data provided in `<FILE_BATCH>`.
 - Do NOT use `## Purpose` as a heading — the purpose is the introductory paragraph after the H1.
 - Do NOT include import statements verbatim — summarize what is imported and why.
-- Max 80 lines per article (Section B budget)
+- Max 80 lines per article (see `~/.claude/skills/dev-wiki/size-budgets.md`)
 - Do NOT create files outside `<WIKI_PATH>/articles/files/`
 - Do NOT modify source code

@@ -6,7 +6,7 @@ Subagent prompt template for rewriting `_ARCHITECTURE.md` from scan findings. Re
 
 Rewrite `<WIKI_PATH>/_ARCHITECTURE.md` using the scan findings below.
 
-Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section G for formatting conventions (header style, noise filter list). Use the 10 sections below instead of Section G's 6-section structure — this prompt extends the template.
+Read `~/.claude/skills/dev-wiki/architecture-template.md` for formatting conventions (header style, noise filter list). Use the 10 sections below instead of the template's 6-section structure — this prompt extends the template.
 
 ### Scan Findings
 
@@ -37,6 +37,6 @@ Write ALL of these sections:
 
 - Write to: `<WIKI_PATH>/_ARCHITECTURE.md`
 - Include `> Last updated: <TODAY> by /dev-scan` header
-- Target 60-80 lines, hard cap 100 lines (Section B budget)
+- Target 60-80 lines, hard cap 100 lines (see `~/.claude/skills/dev-wiki/size-budgets.md`)
 - Do NOT create any files other than `_ARCHITECTURE.md`
 - Do NOT modify source code

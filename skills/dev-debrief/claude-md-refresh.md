@@ -1,6 +1,6 @@
 # Project CLAUDE.md Refresh Check
 
-Companion for dev-debrief Step 8.5. Checks whether the project-level `./CLAUDE.md` needs refreshing and performs the refresh if triggered. See dev-wiki-reference.md Section U for the full convention.
+Companion for dev-debrief Step 8.5. Checks whether the project-level `./CLAUDE.md` needs refreshing and performs the refresh if triggered. See `~/.claude/skills/dev-wiki/claude-md-lifecycle.md` for the full convention.
 
 ## Scope
 

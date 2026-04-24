@@ -1,6 +1,6 @@
-# Section V: Developer Journey Conventions
+# Developer Journey Conventions
 
-Companion for dev-wiki-reference.md Section V. Defines how developer journey articles are structured, named, evaluated, and integrated into the dev-wiki review architecture.
+Shared companion for dev-wiki skills. Defines how developer journey articles are structured, named, evaluated, and integrated into the dev-wiki review architecture.
 
 ## Journey Article Schema
 
@@ -55,3 +55,11 @@ Deferred to Phase 26: Problem Handling, Knowledge Flow.
 
 - **/dev-check J-checks:** Deterministic handoff verification — grep each tool's output for next tool's name. PASS/FAIL per step.
 - **/dev-retro Dimension 8:** Subjective journey coverage — cross-reference steps against journal evidence for user corrections, blocked tasks, skipped steps.
+
+## Journey Integration Conventions (Phase 26)
+
+<!-- SSOT for J-check + Dimension 8 conventions. SKILL.md convention-pointer comments in dev-check/dev-retro/dev-adjust are derived views — when updating conventions, edit THIS section first, then refresh the pointers. -->
+
+**J-check convention (consumed by /dev-check Journey Handoff Checks):** Each journey step with `hands_off_to: PRESENT` is a check assertion. /dev-check J1 validates the claim via two-tier classification: HARD match requires `Run .*${next_tool}` sentence-form in the source tool's SKILL.md (the canonical handoff form); WARN match accepts a bare mention (implicit handoff). FAIL when neither pattern matches. Parse journey articles with a state-flag parser — NEVER awk range syntax (EOF-boundary regression).
+
+**Dimension 8 convention (consumed by /dev-retro Operational Effectiveness):** Cross-reference journey step `tool:` names against last 10 journal entries. Classify each step as Correction-prone (overlaps Dim 3), Blocking-prone (overlaps Dim 1), or Skipped (zero journal mentions = aspirational step, highest-signal finding). Accept partial coverage for pre-Phase-25 journals where tool-step mapping didn't exist.

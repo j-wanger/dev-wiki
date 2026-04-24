@@ -3,7 +3,7 @@ name: dev-debrief
 description: "Use when a session ends with meaningful work. Tiered capture: full (30-60s) or quick (10-15s) mode. Do NOT use at session start (use dev-context) or to fix wiki structural issues (use dev-check)."
 reads: [$WIKI/_CURRENT_STATE.md, $WIKI/_ARCHITECTURE.md, $WIKI/tasks.md, $WIKI/articles/phases/*, $ROOT/CLAUDE.md]
 writes: [$WIKI/_CURRENT_STATE.md(Next Action, Journal, Key Artifacts, Cross-References), $WIKI/articles/journal/*, $WIKI/articles/decisions/*, $WIKI/log.md, $WIKI/index.md, $ROOT/.claude/rules/active-knowledge.md, $ROOT/.claude/rules/working-knowledge.md, $ROOT/CLAUDE.md]
-dispatches: []
+dispatches: [unified-reviewer]
 tier: complex-orchestration
 ---
 
@@ -41,7 +41,7 @@ Full debrief: rewrites all 4 owned sections. Preserve Active Phase, Contract, De
 
 ## Pre-checks
 
-**Ceremony level:** Read `$WIKI/config.md` for `ceremony:` (lite|standard). Phase frontmatter overrides. Default: standard. Steps marked *(Lite: skip)* or *(Lite: simplified)* below are affected.
+**Ceremony level:** Read `$WIKI/config.md` for `ceremony:` (lite|standard). Phase frontmatter overrides. Default: lite. Steps marked *(Lite: skip)* or *(Lite: simplified)* below are affected.
 
 1. **Discover dev wiki.** Run `git rev-parse --show-toplevel 2>/dev/null || pwd` to find `$ROOT`. Check if `$ROOT/.dev-wiki/` exists. If not: "No dev wiki found. Run `/dev-init` to set one up." STOP.
 
@@ -114,19 +114,23 @@ Analyze the **full conversation in your context window** to extract:
 4. **Tasks completed** -- cross-reference with `tasks.md`
 5. **New tasks discovered** -- not previously tracked
 6. **Architectural changes** -- new modules, changed dependencies, structural reorganization
-7. **Escape hatches used** -- read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section D for valid escape hatch types. Note type and justification for each deviation.
+7. **Escape hatches used** -- valid types: **SECURITY** (fix vulnerability), **DEPENDENCY** (prerequisite first), **USER OVERRIDE** (follow user, note deviation), **DISCOVERY** (add precondition). Note type and justification for each deviation.
 8. **Health delta** -- if `## Development Toolchain` exists in `_ARCHITECTURE.md`, compare session-end state against baseline: test count changes (new tests added/removed), type errors introduced/resolved, lint violations, tools added/removed. Include delta in journal entry under `## Health Delta` if any changes occurred.
-9. **Soft observations / Phase N+1 candidates** -- if the session produced a validation-status article OR surfaced uncovered patterns, populate the optional `## Soft Observations / Phase N+1 Candidates` section in the journal entry per Section J. Source: bullet list of (observation, suggested next-phase framing, evidence link). Downstream phases use this section as their refinement-phase candidate source per [[wiki:refinement-phase-pattern]].
+9. **Soft observations / Phase N+1 candidates** -- if the session produced a validation-status article OR surfaced uncovered patterns, populate the optional `## Soft Observations / Phase N+1 Candidates` section in the journal entry per `~/.claude/skills/dev-wiki/journal-templates.md`. Source: bullet list of (observation, suggested next-phase framing, evidence link). Downstream phases use this section as their refinement-phase candidate source per [[wiki:refinement-phase-pattern]].
+
+### Step 4.5: Review Gate (Conditional)
+
+Read `~/.claude/skills/dev-debrief/review-gate.md` for the full size-gated review procedure. Replaces the former standalone `/dev-review` skill. Size gate: 4+ tasks OR ceremony: standard → dispatch unified reviewer; otherwise skip (self-check was the quality gate). Include findings in journal entry (Step 6) under `### Review Gate`.
 
 ### Step 5: Extract Decisions *(Lite: skip)*
 
-For each candidate decision from Step 4, read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section I for the full decision extraction criteria (inclusion, exclusion, signal detection, confidence levels, noise prevention).
+For each candidate decision from Step 4, read `~/.claude/skills/dev-wiki/decision-template.md` for the full decision extraction criteria (inclusion, exclusion, signal detection, confidence levels, noise prevention).
 
-For each qualifying decision, create a file at `$WIKI/articles/decisions/<slug>.md`. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section A for the slugification algorithm and Section I for the article template.
+For each qualifying decision, create a file at `$WIKI/articles/decisions/<slug>.md`. Read `~/.claude/skills/dev-wiki/slugification.md` for the slugification algorithm and `~/.claude/skills/dev-wiki/decision-template.md` for the article template.
 
 ### Step 6: Create Journal Entry *(Lite: simplified — key facts only)*
 
-Create ONE journal entry at `$WIKI/articles/journal/<today>-<slug>.md`. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section J for the rich journal template and Section A for slugification.
+Create ONE journal entry at `$WIKI/articles/journal/<today>-<slug>.md`. Read `~/.claude/skills/dev-wiki/journal-templates.md` for the rich journal template and `~/.claude/skills/dev-wiki/slugification.md` for slugification.
 
 If a journal file for today with the same slug exists, append a numeric suffix.
 
@@ -160,19 +164,19 @@ Use the Read tool on `$WIKI/tasks.md`. Apply changes:
 3. **Mark blocked tasks** `[blocked: reason]`
 4. **Reorder** -- active phase first, then upcoming. Completed phases collapsed.
 
-Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section B for size budgets.
+Read `~/.claude/skills/dev-wiki/size-budgets.md` for size budgets.
 
 ### Step 8: Rewrite _CURRENT_STATE.md
 
-Rewrite `$WIKI/_CURRENT_STATE.md` respecting section ownership. Rewrite owned sections (Recommended Next Action, Session Journal, Key Artifacts, Cross-References) from scratch. Preserve sections owned by other skills (Active Phase, Active Phase Contract, Recent Decisions, Blockers and Open Questions) verbatim. **Lite:** Rewrite only Recommended Next Action and Session Journal; preserve Key Artifacts and Cross-References verbatim. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section F for the 7-section template and Section B for size budgets.
+Rewrite `$WIKI/_CURRENT_STATE.md` respecting section ownership. Rewrite owned sections (Recommended Next Action, Session Journal, Key Artifacts, Cross-References) from scratch. Preserve sections owned by other skills (Active Phase, Active Phase Contract, Recent Decisions, Blockers and Open Questions) verbatim. **Lite:** Rewrite only Recommended Next Action and Session Journal; preserve Key Artifacts and Cross-References verbatim. Read `~/.claude/skills/dev-wiki/state-template.md` for the 7-section template and `~/.claude/skills/dev-wiki/size-budgets.md` for size budgets.
 
 ### Step 8.5: Project CLAUDE.md Refresh Check
 
-Read `~/.claude/skills/dev-debrief/claude-md-refresh.md` for the full refresh procedure per dev-wiki-reference.md Section U. Skip if no project `./CLAUDE.md` exists.
+Read `~/.claude/skills/dev-debrief/claude-md-refresh.md` for the full refresh procedure. Skip if no project `./CLAUDE.md` exists.
 
 ### Step 9: Update _ARCHITECTURE.md
 
-Only update if structural changes occurred this session OR if the `## Development Toolchain` section needs updating (tools added/removed, config paths changed). When updating, rewrite the full file. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section G for the template and Section B for size budgets.
+Only update if structural changes occurred this session OR if the `## Development Toolchain` section needs updating (tools added/removed, config paths changed). When updating, rewrite the full file. Read `~/.claude/skills/dev-wiki/architecture-template.md` for the template and `~/.claude/skills/dev-wiki/size-budgets.md` for size budgets.
 
 To scan the codebase structure, use the Glob tool with patterns like `$ROOT/src/**/*` or `$ROOT/**/*.py` (adjust for the project's language). Do NOT use `find` commands.
 
@@ -196,15 +200,15 @@ Read `~/.claude/skills/dev-debrief/debrief-finalization.md` Step 11 instructions
 
 ### Step 12: Update .claude/rules/active-phase.md
 
-Always rewrite `$ROOT/.claude/rules/active-phase.md` in full debrief mode. Format: Phase, Objective, Scope, Key constraints, Exit criteria, Abort rule. Keep to 10-15 lines, 20 line hard cap per dev-wiki-reference.md Section B.
+Always rewrite `$ROOT/.claude/rules/active-phase.md` in full debrief mode. Format: Phase, Objective, Scope, Key constraints, Exit criteria, Abort rule. Keep to 10-15 lines, 20 line hard cap per `~/.claude/skills/dev-wiki/size-budgets.md`.
 
-### Step 12a: Working-Knowledge Decay *(Lite: skip)*
+### Step 12b: Validate/Transition active-knowledge.md
 
-Run the Section M 7-day half-life decay algorithm on `$ROOT/.claude/rules/working-knowledge.md`. Runs BEFORE Step 12b's carry-forward. Read dev-wiki-reference.md Section M for the full algorithm (7-day half-life, 21-day eviction, descending sort). Note decayed/evicted counts in Step 16 report.
+Read `~/.claude/skills/dev-debrief/active-knowledge-transition.md` for the carry-forward logic. Two paths: phase-changed (carry forward entries to working-knowledge, delete active-knowledge.md) and same-phase (no action). Skip if no knowledge wiki and no active-knowledge.md.
 
-### Step 12b: Validate/Prune active-knowledge.md
+### Step 12c: Retro Check (Conditional)
 
-Read `~/.claude/skills/dev-debrief/active-knowledge-transition.md` for the validate/prune/carry-forward logic. Covers two paths: phase-changed (carry forward all entries to working-knowledge, delete active-knowledge.md) and same-phase (auto-refresh stale entries). Skip if no knowledge wiki and no active-knowledge.md.
+Read `~/.claude/skills/dev-debrief/retro-check.md` for the lightweight retrospective procedure. Replaces the former standalone `/dev-retro` skill. Triggers when completed phase count % 5 == 0. Analyzes dims 1-3 only (blockers, reversals, corrections). Include findings in journal entry.
 
 ### Steps 13-15: Index Rebuild, Log, Breadcrumb Cleanup
 

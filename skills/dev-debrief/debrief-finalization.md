@@ -12,7 +12,7 @@ Use the Glob tool to check if `$WIKI/articles/status/$(date +%Y-%m-%d)-codebase-
 
 **Scan article integration:** If `$WIKI/articles/status/*-scan.md` files exist from a prior `/dev-scan`, reference them in the snapshot rather than duplicating their content. The snapshot should summarize scan findings (module count, issue counts, hub modules), not replicate the full dependency maps.
 
-Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section B for size budgets.
+Read `~/.claude/skills/dev-wiki/size-budgets.md` for size budgets.
 
 ## Step 13: Rebuild index.md *(Lite: skip)*
 

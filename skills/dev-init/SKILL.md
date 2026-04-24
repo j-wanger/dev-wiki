@@ -64,7 +64,7 @@ ROOT="<project_root>"
 mkdir -p "$ROOT/.dev-wiki/articles/phases" "$ROOT/.dev-wiki/articles/decisions" "$ROOT/.dev-wiki/articles/journal" "$ROOT/.dev-wiki/articles/status" "$ROOT/.dev-wiki/articles/modules" "$ROOT/.dev-wiki/articles/files"
 ```
 
-Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` final section (Directory Structure) for the full layout reference.
+The canonical `.dev-wiki/` directory layout is: `articles/{phases,decisions,journal,status,modules,files}/`, plus `_CURRENT_STATE.md`, `_ARCHITECTURE.md`, `tasks.md`, `schema.md`, `config.md`, `index.md`, `log.md`.
 
 ### Step 6: Create schema.md
 
@@ -82,7 +82,7 @@ ceremony: standard
 
 This is the only interactive step. Present proposed phases for user confirmation. Carry the `mode` flag (greenfield|retrofit) from Step 4 into this step.
 
-Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section H for the phase article template and Section A for slugification.
+Read `~/.claude/skills/dev-init/init-scaffolding.md` for the phase article template. For slugification, see `~/.claude/skills/dev-wiki/slugification.md`.
 
 #### Greenfield mode
 
@@ -105,11 +105,11 @@ For each confirmed phase, write `articles/phases/phase-NN-<slug>.md` using the t
 
 ### Step 8: Create _ARCHITECTURE.md
 
-Scan the codebase using the Glob tool with appropriate patterns for the project's language. Filter out noise directories (listed in reference). Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section G for the template and Section B for size budgets.
+Scan the codebase using the Glob tool with appropriate patterns for the project's language. Filter out noise directories (listed in reference). See `~/.claude/skills/dev-wiki/architecture-template.md` for the template and `~/.claude/skills/dev-wiki/size-budgets.md` for size budgets.
 
 ### Step 9: Create _CURRENT_STATE.md
 
-Populate from phase articles (Step 7), file scan (Step 3), and git status. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section F for the 7-section template and Section B for size budgets.
+Populate from phase articles (Step 7), file scan (Step 3), and git status. See `~/.claude/skills/dev-init/init-scaffolding.md` for the 7-section template and `~/.claude/skills/dev-wiki/size-budgets.md` for size budgets.
 
 For init, set progress to ~0%, decisions to "none yet", blockers to "none yet", session journal to "no sessions yet".
 
@@ -131,7 +131,7 @@ Extract tasks from phase exit criteria and body content. Group by phase with pha
 - [ ] <task from exit criteria>
 ```
 
-For retrofit mode with completed phases, mark tasks `[x]` and collapse into `<details>` blocks if needed. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section B for size budgets.
+For retrofit mode with completed phases, mark tasks `[x]` and collapse into `<details>` blocks if needed. See `~/.claude/skills/dev-wiki/size-budgets.md` for size budgets.
 
 ### Step 11: Create index.md
 
@@ -207,4 +207,4 @@ Also creates `.claude/rules/active-phase.md` as a compaction-proof phase context
 | File write fails mid-init | Report which files succeeded and failed. User can re-run `/dev-init`. |
 | Plan docs found but unparseable | Fall back to inferring phases from code. Warn: "Could not parse plan documents." |
 
-For data flow conventions (Section G) and CLAUDE.md lifecycle (Section U), see dev-wiki-reference.md.
+For data flow conventions, see `~/.claude/skills/dev-wiki/architecture-template.md`. For CLAUDE.md lifecycle, see `~/.claude/skills/dev-wiki/claude-md-lifecycle.md`.

@@ -1,6 +1,6 @@
 ---
 name: dev-plan
-description: "Use when .dev-wiki/ exists for phase planning. MUST BE USED instead of brainstorming in .dev-wiki/ projects. Do NOT use for mid-phase task changes (use dev-adjust)."
+description: "Use when .dev-wiki/ exists for phase planning. MUST BE USED instead of brainstorming in .dev-wiki/ projects. Do NOT use for mid-phase task changes (edit tasks.md directly)."
 reads: [$WIKI/_CURRENT_STATE.md, $WIKI/_ARCHITECTURE.md, $WIKI/tasks.md, $WIKI/articles/phases/*, $WIKI/articles/decisions/*]
 writes: [$WIKI/_CURRENT_STATE.md(Active Phase, Contract, Decisions, Blockers), $WIKI/tasks.md, $WIKI/articles/phases/*, $WIKI/articles/decisions/*, $ROOT/.claude/rules/active-phase.md, $ROOT/.claude/rules/active-knowledge.md, $ROOT/.claude/rules/working-knowledge.md(seed cross-phase entries, decay, sort)]
 dispatches: [plan-reviewer, approach-reviewer]
@@ -51,7 +51,7 @@ This applies to EVERY phase regardless of perceived simplicity.
 2. **Verify living documents.** Confirm `_CURRENT_STATE.md`, `_ARCHITECTURE.md`, `tasks.md` exist under `.dev-wiki/`. If any are missing, note which ones -- they will be created during Step 8.
 
 3. **Determine target phase.** Use the Read tool on `_CURRENT_STATE.md`:
-   - If active phase has open tasks: "Phase N has X open tasks. Continue implementation or run `/dev adjust`." STOP.
+   - If active phase has open tasks: "Phase N has X open tasks. Continue implementation." STOP.
    - If active phase has all tasks done: target = next phase (N+1).
    - If active phase has 0 tasks: target = active phase (needs planning).
    - If no active phase: target = first `not-started` phase.
@@ -63,7 +63,7 @@ Throughout this flow, `$ROOT` is the project root. `$WIKI` is `$ROOT/.dev-wiki`.
 
 ### Step 0.5: Ceremony Level Detection
 
-Read `$WIKI/config.md` for `ceremony:` value (lite or standard). If absent, default to `standard`. Check target phase article frontmatter for `ceremony:` override (frontmatter wins). Read `~/.claude/skills/dev-plan/ceremony-levels.md` for per-step skip rules. Steps marked *(Lite: skip)* below are skipped when ceremony = lite.
+Read `$WIKI/config.md` for `ceremony:` value (lite or standard). If absent, default to `lite`. Check target phase article frontmatter for `ceremony:` override (frontmatter wins). Read `~/.claude/skills/dev-plan/ceremony-levels.md` for per-step skip rules. Steps marked *(Lite: skip)* below are skipped when ceremony = lite.
 
 ---
 
@@ -73,7 +73,7 @@ Read `$WIKI/config.md` for `ceremony:` value (lite or standard). If absent, defa
 
 Read silently -- do NOT print contents to the user. Required: `$WIKI/_CURRENT_STATE.md`, `$WIKI/_ARCHITECTURE.md`, `$WIKI/tasks.md`, target phase article (Glob `$WIKI/articles/phases/`). Optional: last 5 decision articles (Glob `$WIKI/articles/decisions/`, Read 5 most recent).
 
-**Missing phase article:** If no article exists for the target phase, warn: "No article for Phase N. Creating a stub." Create a minimal phase article using Section H template with `status: not-started` and empty scope/exit_criteria, then proceed.
+**Missing phase article:** If no article exists for the target phase, warn: "No article for Phase N. Creating a stub." Create a minimal phase article using the template from `~/.claude/skills/dev-wiki/phase-template.md` with `status: not-started` and empty scope/exit_criteria, then proceed.
 
 **Budget:** Read at most 10 files in this step.
 
@@ -136,7 +136,7 @@ Based on user's answers (or prior constraints), propose the approach for THIS PH
 - **Reference prior decisions** that constrain this phase.
 - **YAGNI ruthlessly.** If not in exit criteria, it does not belong.
 
-**PERSIST immediately:** Write draft decision article at `$WIKI/articles/decisions/<slug>.md` with `confidence: low`. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section I for the decision article template.
+**PERSIST immediately:** Write draft decision article at `$WIKI/articles/decisions/<slug>.md` with `confidence: low`. Read `~/.claude/skills/dev-wiki/decision-template.md` for the decision article template.
 
 ### Step 6.1: Contradiction Check (Inline) *(Lite: skip)*
 
@@ -172,11 +172,11 @@ Do NOT write any implementation code until the user has approved.
 A vague "sure" counts as approval. Silence does NOT.
 </HARD-GATE>
 
-If the user requests changes, revise, update the draft decision article, and re-present. **Maximum 3 revision rounds.** After 3: "Consider running /dev adjust later if the approach needs further iteration."
+If the user requests changes, revise, update the draft decision article, and re-present. **Maximum 3 revision rounds.** After 3: proceed with the best available version and note unresolved concerns in the phase article.
 
 ### Step 7.5: Draft Tasks and Review Plan Quality *(Lite: skip — merge into Step 7)*
 
-1. **Draft tasks** in conversation context (do NOT write to files yet). Follow Section C enriched task schema *(Lite: simplified schema per ceremony-levels.md)*: each task needs description, TDD cycle, scope, success, size.
+1. **Draft tasks** in conversation context (do NOT write to files yet). Follow `~/.claude/skills/dev-plan/task-schema.md` enriched task schema *(Lite: simplified schema per ceremony-levels.md)*: each task needs description, TDD cycle, scope, success, size.
 2. **Dispatch plan reviewer subagent.** Read `~/.claude/skills/dev-plan/plan-reviewer-prompt.md`. Launch Agent with the prompt + phase article (objective, exit criteria) + retrieved wiki articles + drafted tasks. Collect Score/Issues/Verdict. **Timeout:** 120 seconds. If subagent fails or times out: accept draft tasks without review score. Warn: `"Plan reviewer unavailable — proceeding without quality gate."`
 3. **Handle verdict:**
    - Score 9-10 (accept): Proceed to Step 7.6.
@@ -197,31 +197,31 @@ All wiki artifacts are updated atomically. Follow this order:
 Update draft decisions: set `confidence` to `medium`/`high`, set `source: plan`. Create additional articles for new decisions from Steps 5-7.
 
 #### 8b: Write Tasks to tasks.md
-Write tasks for the target phase (Section C: enriched task schema, Section B: size budgets). Each task MUST include TDD cycle (RED/GREEN/REFACTOR), scope, success criterion, and size *(Lite: simplified schema — description+scope+success only, see ceremony-levels.md)*. Order by dependency. At most 1 L task per phase.
+Write tasks for the target phase (see `~/.claude/skills/dev-plan/task-schema.md` for enriched task schema, `~/.claude/skills/dev-wiki/size-budgets.md` for size budgets). Each task MUST include TDD cycle (RED/GREEN/REFACTOR), scope, success criterion, and size *(Lite: simplified schema — description+scope+success only, see ceremony-levels.md)*. Order by dependency. At most 1 L task per phase.
 
 #### 8c: Update _CURRENT_STATE.md
-Rewrite `## Recommended Next Action`, `## Active Phase` (status: active, ~0%), `## Active Phase Contract`, `## Recent Decisions`, and `## Blockers and Open Questions` (remove resolved `[planning]` questions). Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section F for the template.
+Rewrite `## Recommended Next Action`, `## Active Phase` (status: active, ~0%), `## Active Phase Contract`, `## Recent Decisions`, and `## Blockers and Open Questions` (remove resolved `[planning]` questions). Read `~/.claude/skills/dev-wiki/state-template.md` for the template.
 
 #### 8d: Update _ARCHITECTURE.md
 Only update if the approach changes project structure. If no structural changes, skip.
 
 #### 8e: Update Phase Article
-Set `status: active`, `updated: <today>`. If creating a new phase article, read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section H for the template.
+Set `status: active`, `updated: <today>`. If creating a new phase article, read `~/.claude/skills/dev-wiki/phase-template.md` for the template.
 
 #### 8f: Write Compaction Anchor -- active-phase.md
 Do NOT create any other hooks or rules files beyond `active-phase.md` and `active-knowledge.md` (Steps 8f and 8f-bis). Ensure `$ROOT/.claude/rules/` exists (`mkdir -p`). Write `$ROOT/.claude/rules/active-phase.md` with: Phase, Objective, Scope (file globs), Key constraints (from decisions), Exit criteria, Abort rule. Size: 10-15 lines, ~50 tokens.
 
 #### 8f-bis: Write Compaction Anchor -- active-knowledge.md *(Lite: skip)*
 
-Distill cross-wiki articles from Step 2 and phase decisions from Steps 5-7 into `.claude/rules/active-knowledge.md`. Read `~/.claude/skills/dev-wiki/dev-wiki-reference.md` Section L for the template, evaluation criteria, and size budget.
+Distill cross-wiki articles from Step 2 and phase decisions from Steps 5-7 into `.claude/rules/active-knowledge.md`. Read `~/.claude/skills/dev-wiki/active-knowledge-spec.md` for the template, evaluation criteria, and size budget.
 
-**Process:** (1) Extract 2-5 key propositions per source. (2) Evaluate each: must pass 2 of 3 filters from Section L (multi-turn, non-obvious, phase-dependent) -- drop the rest. (3) Assemble using the Section L template. (4) Count lines: if >30 re-distill; if still >40: skip writing active-knowledge.md, report: "Active knowledge exceeds 40-line cap. Skipping." Continue with Step 8g. (5) Write to `$ROOT/.claude/rules/active-knowledge.md`, overwriting any prior phase file.
+**Process:** (1) Extract 2-5 key propositions per source. (2) Evaluate each: must pass 2 of 3 filters from `~/.claude/skills/dev-wiki/active-knowledge-spec.md` (multi-turn, non-obvious, phase-dependent) -- drop the rest. (3) Assemble using the template. (4) Count lines: if >30 re-distill; if still >40: skip writing active-knowledge.md, report: "Active knowledge exceeds 40-line cap. Skipping." Continue with Step 8g. (5) Write to `$ROOT/.claude/rules/active-knowledge.md`, overwriting any prior phase file.
 
 **Skip:** If no knowledge wiki and no new decisions in Steps 5-7, skip entirely. Delete any prior-phase file if it exists; if absent, skip silently.
 
 #### 8f-ter: Seed Working Knowledge (Cross-Phase Facts)
 
-After writing active-knowledge.md, evaluate retrieved facts from Step 2 that were NOT included in active-knowledge (failed phase-dependent filter but passed multi-turn + non-obvious). These are cross-phase facts useful beyond this phase. If any exist, offer: `"N cross-phase facts available for working knowledge. Activate? (y/n)"`. On confirmation: (1) read existing `.claude/rules/working-knowledge.md` if it exists, (2) apply 7-day decay per Section M (halve `uses` for entries where today - `last_decay` >= 7 days, update `last_decay`), (3) dedup new entries against existing by source slug — if match, increment `uses` instead of inserting, (4) append genuinely new entries as `[uses: 1]` with `activated: <today>`, `last_decay: <today>`, (5) sort all entries by usage count descending, (6) apply LRU eviction if >100 entries, (7) enforce 210-line hard cap — evict lowest-count entries (ties: oldest activated date) until within cap. Skip if no cross-phase facts found.
+After writing active-knowledge.md, evaluate retrieved facts from Step 2 that were NOT included in active-knowledge (failed phase-dependent filter but passed multi-turn + non-obvious). These are cross-phase facts useful beyond this phase. If any exist, offer: `"N cross-phase facts available for working knowledge. Activate? (y/n)"`. On confirmation: (1) read existing `.claude/rules/working-knowledge.md` if it exists, (2) dedup new entries against existing by source slug — if match, increment `uses` instead of inserting, (3) append genuinely new entries as `[uses: 1]` with `activated: <today>`, (4) sort all entries by usage count descending, (5) prune if >100 entries — remove lowest-count (ties: oldest activated date) until at 100. Skip if no cross-phase facts found.
 
 #### 8g: Mirror Tasks to TodoWrite (Compaction Anchor)
 Write each task to TodoWrite with embedded constraints. Set all to `pending`. Set first to `in_progress` only if user will continue in this session (determined in Step 9).

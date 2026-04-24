@@ -47,7 +47,7 @@ Read `refresh-flow.md` and follow the incremental refresh protocol.
 
 Use Glob, Grep, Read tools. Do NOT use Bash for file discovery except for hash computation (`shasum`). Budget: max 30 file reads, max 150 lines each.
 
-**Content hashing:** For every source file Read during Steps 2-3, compute its SHA-256 hash using Bash: `shasum -a 256 <file> | cut -c1-16`. Store results in a hash lookup table: `{project-relative-path: 16-char-hash}`. This table is passed to Subagents B and C in Step 6 for article frontmatter. See Section Q of dev-wiki/dev-wiki-reference.md for the full spec. Skip files matching Section Q exclusion patterns (binary, generated, node_modules, etc.).
+**Content hashing:** For every source file Read during Steps 2-3, compute its SHA-256 hash using Bash: `shasum -a 256 <file> | cut -c1-16`. Store results in a hash lookup table: `{project-relative-path: 16-char-hash}`. This table is passed to Subagents B and C in Step 6 for article frontmatter. See `~/.claude/skills/dev-scan/content-hashing.md` for the full spec. Skip files matching its exclusion patterns (binary, generated, node_modules, etc.).
 
 **Compaction survival:** Write scan progress to TodoWrite (Steps 1-7, all `pending`). Update as you work.
 
@@ -106,7 +106,7 @@ For each top-level source directory (max 8, largest first by file count):
 
 **Output per module:** Name, purpose, key files, public API, dependencies, test coverage, per-file hashes.
 
-**Batch hash remaining files:** After Step 3 module reads, hash all source files not yet hashed using a single Bash call with `find` and `shasum -a 256`. Construct exclusion flags from the FULL Section Q exclusion list (node_modules, .git, dist, build, __pycache__, .venv, venv, .tox, *.egg-info, .mypy_cache, .pytest_cache, plus binary extensions). Parse output into the hash lookup table. This ensures ALL source files are hashed, not just those Read during scanning.
+**Batch hash remaining files:** After Step 3 module reads, hash all source files not yet hashed using a single Bash call with `find` and `shasum -a 256`. Construct exclusion flags from the FULL exclusion list in `~/.claude/skills/dev-scan/content-hashing.md` (node_modules, .git, dist, build, __pycache__, .venv, venv, .tox, *.egg-info, .mypy_cache, .pytest_cache, plus binary extensions). Parse output into the hash lookup table. This ensures ALL source files are hashed, not just those Read during scanning.
 
 ### Step 3b: Cross-File Dependency Mapping
 
@@ -212,7 +212,7 @@ Read `~/.claude/skills/dev-scan/file-prompt.md` for the prompt template. Split s
 2. Glob `<wiki_path>/articles/modules/*.md` — verify count matches dispatched modules
 3. Glob `<wiki_path>/articles/files/*.md` — verify count matches dispatched files (minus skipped barrels)
 4. If any subagent failed: report which, apply successful outputs, write missing artifacts directly as fallback
-5. **Slug-drift HARD check** (extensions per dev-wiki-reference.md Section A §Recognized Extensions; two-tier per [[wiki:two-tier-drift-classification]]): `ls <wiki_path>/articles/files/ | grep -E '-(sh|ts|py|json|yaml)\.md$'` MUST return empty. Fail-loud: `"Slug-drift detected (non-md extension suffix)."`
+5. **Slug-drift HARD check** (extensions per `~/.claude/skills/dev-wiki/slugification.md` §Recognized Extensions; two-tier per [[wiki:two-tier-drift-classification]]): `ls <wiki_path>/articles/files/ | grep -E '-(sh|ts|py|json|yaml)\.md$'` MUST return empty. Fail-loud: `"Slug-drift detected (non-md extension suffix)."`
 6. **Slug-drift WARN check:** `ls <wiki_path>/articles/files/ | grep -E '-md\.md$'` — list matches for human review (known false-positive class: legit basenames ending in "md" like `scaffold-claude-md.md`; verify against source path). See [[phase-19e-subagent-template-hardening-scope]], [[full-scan-over-refresh]], and [[wiki:silent-false-pass-pattern-family]] for the failure-mode family.
 
 ---

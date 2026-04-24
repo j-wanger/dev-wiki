@@ -14,10 +14,9 @@ if [ -d "$ROOT/.dev-wiki" ] && [ -f ~/.claude/skills/dev-wiki/session-context.md
   elif [ -f "$ROOT/.dev-wiki/.pending-commit" ]; then
     echo '[dev-wiki] Unprocessed commit data from previous session.'
   fi
-  echo '[dev-wiki] Run /dev-context to load project state.'
 elif [ -d "$ROOT/.dev-wiki" ]; then
   # Fallback if session-context.md not installed
-  echo '[dev-wiki] Project state available. Run /dev-context to load.'
+  echo '[dev-wiki] Project state available. Read .dev-wiki/AGENTS.md to load.'
 fi
 
 # --- Knowledge Wiki checks ---
