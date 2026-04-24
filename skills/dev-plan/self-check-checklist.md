@@ -78,7 +78,7 @@ For hooks/enforcement files modified alongside ceremony-aware skills:
 
 **Skip:** if project has <10 source files OR no `.dev-wiki/articles/files/` directory exists.
 
-For each scope file (created/modified, non-excluded per `dependency-registration-spec.md`):
+For each scope file (created/modified, excluding tests, config, generated, and binary files):
 - Verify file article exists: Glob `.dev-wiki/articles/files/<path-slug>.md` (path-slug per `~/.claude/skills/dev-wiki/slugification.md`).
 - Bidirectional check: if file A's `imports` includes path B, read B's article and verify `imported_by` includes A's path. Flag mismatches.
 - Coupling nexus: if any scope file has `imports` ≥5 AND `imported_by` ≥5, note as refactor candidate in phase journal soft observations.

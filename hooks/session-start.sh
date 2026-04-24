@@ -6,17 +6,15 @@
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
 # --- Dev Wiki checks ---
-if [ -d "$ROOT/.dev-wiki" ] && [ -f ~/.claude/skills/dev-wiki/session-context.md ]; then
-  cat ~/.claude/skills/dev-wiki/session-context.md 2>/dev/null
-  # Augment with breadcrumb-specific status
+if [ -d "$ROOT/.dev-wiki" ]; then
+  echo '[dev-wiki] Development lifecycle system active.'
+  echo ''
+  echo 'SESSION START: Read .dev-wiki/AGENTS.md and follow its session-start protocol to auto-load project state.'
   if [ -f "$ROOT/.dev-wiki/.session-end" ]; then
     echo '[dev-wiki] Previous session ended. Unprocessed state available.'
   elif [ -f "$ROOT/.dev-wiki/.pending-commit" ]; then
     echo '[dev-wiki] Unprocessed commit data from previous session.'
   fi
-elif [ -d "$ROOT/.dev-wiki" ]; then
-  # Fallback if session-context.md not installed
-  echo '[dev-wiki] Project state available. Read .dev-wiki/AGENTS.md to load.'
 fi
 
 # --- Knowledge Wiki checks ---

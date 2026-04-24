@@ -116,7 +116,7 @@ Analyze the **full conversation in your context window** to extract:
 6. **Architectural changes** -- new modules, changed dependencies, structural reorganization
 7. **Escape hatches used** -- valid types: **SECURITY** (fix vulnerability), **DEPENDENCY** (prerequisite first), **USER OVERRIDE** (follow user, note deviation), **DISCOVERY** (add precondition). Note type and justification for each deviation.
 8. **Health delta** -- if `## Development Toolchain` exists in `_ARCHITECTURE.md`, compare session-end state against baseline: test count changes (new tests added/removed), type errors introduced/resolved, lint violations, tools added/removed. Include delta in journal entry under `## Health Delta` if any changes occurred.
-9. **Soft observations / Phase N+1 candidates** -- if the session produced a validation-status article OR surfaced uncovered patterns, populate the optional `## Soft Observations / Phase N+1 Candidates` section in the journal entry per `~/.claude/skills/dev-wiki/journal-templates.md`. Source: bullet list of (observation, suggested next-phase framing, evidence link). Downstream phases use this section as their refinement-phase candidate source per [[wiki:refinement-phase-pattern]].
+9. **Soft observations / Phase N+1 candidates** -- if the session produced a validation-status article OR surfaced uncovered patterns, populate the optional `## Soft Observations / Phase N+1 Candidates` section in the journal entry per `~/.claude/skills/dev-wiki/journal-templates.md`. Source: bullet list of (observation, suggested next-phase framing, evidence link). Downstream phases use this section as their refinement-phase candidate source as refinement-phase candidates.
 
 ### Step 4.5: Review Gate (Conditional)
 
@@ -146,7 +146,7 @@ If `$ROOT/.claude/rules/active-knowledge.md` exists:
    ```
    Active knowledge: N entries, M referenced (~X% approximate hit rate, literal match).
    ```
-   If hit rate < 60%, add: `Consider pruning low-relevance entries in next /dev-plan.` (Threshold per [[wiki:activation-heuristic-tuning]] — >60% is healthy activation.)
+   If hit rate < 60%, add: `Consider pruning low-relevance entries in next /dev-plan.` (>60% is healthy activation.)
 
 If active-knowledge.md does not exist, skip this step.
 

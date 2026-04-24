@@ -6,16 +6,15 @@ Before writing ANY implementation code:
 2. Pick the NEXT uncompleted task (work in order)
 3. State which task you are working on
 4. Follow the TDD cycle in the task description (RED -> GREEN -> REFACTOR -> VERIFY)
-5. VERIFY: Tiered verification sequence (see [[wiki:fail-open-vs-fail-stop-in-llm-pipelines]]):
+5. VERIFY: Tiered verification sequence (tiered, cheapest first):
    a. **Precondition check:** Task has a `success:` field. If absent, emit "No success: field — verification skipped" and proceed to 5.5.
    b. **Structural checks (Tier 0):** If success field includes file-existence or schema checks, run those first. These are cheapest and catch format errors early.
    c. **Referential checks (Tier 1):** If success field includes cross-reference or link-integrity checks, run next. These catch broken dependencies.
    d. **Behavioral checks (Tier 2):** Run remaining success field commands (functional correctness, test pass).
    e. **Regression check:** If prior tasks in this phase have cheap success criteria (file-existence, grep), re-run them to verify no regressions. Skip expensive checks (test suites, builds). If any regression found, fix before proceeding.
-   - If all tiers pass → proceed to step 5.5 (register)
+   - If all tiers pass → proceed to step 6
    - If any fail → fix the issue and re-run the failed tier
    - Compose tiers with `&&` in success criteria for single-command verification
-5.5. REGISTER: Run dependency registration per `~/.claude/skills/dev-wiki/dependency-registration-spec.md`. Create/update file articles for created/modified scope files, maintain bidirectional imported_by. Skip if project <10 source files or all scope files are excluded types.
 6. When done, mark it [x] in tasks.md BEFORE moving to next
 7. After ALL tasks in the active phase are marked [x], run the Post-Implementation Self-Check from `~/.claude/skills/dev-plan/implementation-guide.md`, then proceed to `/dev-debrief` (which includes a size-gated review gate: L/Standard phases get unified reviewer dispatch; S/M Lite phases rely on self-check as the quality gate). Standard: all 7 self-check categories; Lite: categories 1-2 only. Fix findings inline; escalate after 3 attempts per finding.
 

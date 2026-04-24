@@ -63,7 +63,7 @@ Throughout this flow, `$ROOT` is the project root. `$WIKI` is `$ROOT/.dev-wiki`.
 
 ### Step 0.5: Ceremony Level Detection
 
-Read `$WIKI/config.md` for `ceremony:` value (lite or standard). If absent, default to `lite`. Check target phase article frontmatter for `ceremony:` override (frontmatter wins). Read `~/.claude/skills/dev-plan/ceremony-levels.md` for per-step skip rules. Steps marked *(Lite: skip)* below are skipped when ceremony = lite.
+Read `$WIKI/config.md` for `ceremony:` value (lite or standard). If absent, default to `lite`. Check target phase article frontmatter for `ceremony:` override (frontmatter wins). Precedence: phase frontmatter > config.md > default (lite). Steps marked *(Lite: skip)* below are skipped under lite ceremony. Under lite, task schema is simplified: `- [ ] <Description> | scope: <globs> | success: <criterion>` (no TDD cycle fields).
 
 ---
 
@@ -176,7 +176,7 @@ If the user requests changes, revise, update the draft decision article, and re-
 
 ### Step 7.5: Draft Tasks and Review Plan Quality *(Lite: skip — merge into Step 7)*
 
-1. **Draft tasks** in conversation context (do NOT write to files yet). Follow `~/.claude/skills/dev-plan/task-schema.md` enriched task schema *(Lite: simplified schema per ceremony-levels.md)*: each task needs description, TDD cycle, scope, success, size.
+1. **Draft tasks** in conversation context (do NOT write to files yet). Follow `~/.claude/skills/dev-plan/task-schema.md` enriched task schema *(Lite: simplified — description+scope+success only)*: each task needs description, TDD cycle, scope, success, size.
 2. **Dispatch plan reviewer subagent.** Read `~/.claude/skills/dev-plan/plan-reviewer-prompt.md`. Launch Agent with the prompt + phase article (objective, exit criteria) + retrieved wiki articles + drafted tasks. Collect Score/Issues/Verdict. **Timeout:** 120 seconds. If subagent fails or times out: accept draft tasks without review score. Warn: `"Plan reviewer unavailable — proceeding without quality gate."`
 3. **Handle verdict:**
    - Score 9-10 (accept): Proceed to Step 7.6.
@@ -197,7 +197,7 @@ All wiki artifacts are updated atomically. Follow this order:
 Update draft decisions: set `confidence` to `medium`/`high`, set `source: plan`. Create additional articles for new decisions from Steps 5-7.
 
 #### 8b: Write Tasks to tasks.md
-Write tasks for the target phase (see `~/.claude/skills/dev-plan/task-schema.md` for enriched task schema, `~/.claude/skills/dev-wiki/size-budgets.md` for size budgets). Each task MUST include TDD cycle (RED/GREEN/REFACTOR), scope, success criterion, and size *(Lite: simplified schema — description+scope+success only, see ceremony-levels.md)*. Order by dependency. At most 1 L task per phase.
+Write tasks for the target phase (see `~/.claude/skills/dev-plan/task-schema.md` for enriched task schema, `~/.claude/skills/dev-wiki/size-budgets.md` for size budgets). Each task MUST include TDD cycle (RED/GREEN/REFACTOR), scope, success criterion, and size *(Lite: simplified — description+scope+success only)*. Order by dependency. At most 1 L task per phase.
 
 #### 8c: Update _CURRENT_STATE.md
 Rewrite `## Recommended Next Action`, `## Active Phase` (status: active, ~0%), `## Active Phase Contract`, `## Recent Decisions`, and `## Blockers and Open Questions` (remove resolved `[planning]` questions). Read `~/.claude/skills/dev-wiki/state-template.md` for the template.

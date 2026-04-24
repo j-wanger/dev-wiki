@@ -4,7 +4,7 @@ trigger: read this file when the user opts in to the "Scaffold project CLAUDE.md
 
 ## Purpose
 
-Author a project-level `$ROOT/CLAUDE.md` from `~/.claude/skills/dev-init/templates/project-CLAUDE.md`, substituting placeholders interactively. Produces the project entry point that composes with `~/.claude/CLAUDE.md` per [[wiki:claude-md-interaction-contract]].
+Author a project-level `$ROOT/CLAUDE.md` from `~/.claude/skills/dev-init/templates/project-CLAUDE.md`, substituting placeholders interactively. Produces the project entry point that composes with `~/.claude/CLAUDE.md` per the composition contract (project rules win for same concern; different concerns layer additively).
 
 ## Pre-checks
 
@@ -35,7 +35,7 @@ For other placeholders, replace inline.
 
 ## Write
 
-Write the substituted result to `$ROOT/CLAUDE.md`. Verify size: `wc -l CLAUDE.md` ≤ 80 lines per [[wiki:harness-composition-playbook]] invariant #2. If over: report and prompt user to trim.
+Write the substituted result to `$ROOT/CLAUDE.md`. Verify size: `wc -l CLAUDE.md` ≤ 80 lines per the harness composition invariant (project CLAUDE.md ≤80 lines). If over: report and prompt user to trim.
 
 ## Post-write Validation
 

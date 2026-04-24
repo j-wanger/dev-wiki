@@ -72,7 +72,7 @@ Read `~/.claude/skills/dev-init/init-scaffolding.md` for the schema.md template.
 
 ### Step 6.5: Create config.md
 
-Write `.dev-wiki/config.md` with ceremony configuration. Default to `standard` for complex/meta-tooling projects. For small app projects, suggest `lite` (see `~/.claude/skills/dev-plan/ceremony-levels.md`).
+Write `.dev-wiki/config.md` with ceremony configuration. Default to `standard` for complex/meta-tooling projects. For small app projects, suggest `lite`. Ceremony levels: **lite** (default — streamlined, no subagent reviewers) and **standard** (full review gates for complex work).
 
 ```markdown
 ceremony: standard

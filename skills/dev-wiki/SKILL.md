@@ -61,17 +61,17 @@ All dev-wiki skills MUST follow these tool selection rules (from `tool-selection
 | Phase count is multiple of 5 | `/dev-debrief` includes retro check automatically |
 | Process feels repetitive or friction is high | `/dev-debrief` includes retro check (dims 1-3) |
 
-## Red Flags
+## Guidance
 
-These thoughts mean STOP -- you are rationalizing skipping lifecycle discipline:
+Consider whether the lifecycle step is proportionate to the task:
 
-| Thought | Reality |
-|---------|---------|
-| "I'll debrief later" | You won't. `/dev-debrief` now. |
-| "This phase is too simple to plan" | Even small phases benefit from `/dev-plan` — but use Lite ceremony (`config.md`). Use `--thorough` or `ceremony: standard` for complex work. |
-| "I know what to do" | AGENTS.md loads actual state. Your memory may be stale. |
-| "I'll skip the test" | TDD is non-negotiable. RED → GREEN → REFACTOR per task. |
-| "The wiki is probably fine" | Run `/dev-check`. Drift is invisible until it hurts. |
+| Situation | Suggestion |
+|-----------|------------|
+| Ending a session with meaningful work | Run `/dev-debrief` — undocumented sessions are lost sessions. |
+| Starting a new phase | Run `/dev-plan` with lite ceremony. Use `ceremony: standard` for complex work. |
+| Unsure about project state | AGENTS.md loads actual state. Check before assuming. |
+| Modifying code | Follow TDD per task (RED → GREEN → REFACTOR). |
+| State feels stale | Run `/dev-check`. Drift is invisible until it hurts. |
 
 ## Skill Classification
 
@@ -80,9 +80,8 @@ Most dev-wiki skills are **single-agent** (Claude does all work directly). Excep
 - `/dev-init` -- Bootstrap `.dev-wiki/` scaffold
 - `/dev-plan` -- Phase planning with wiki knowledge retrieval (dispatches approach + plan reviewer subagents)
 - `/dev-debrief` -- Tiered session capture (full or quick)
-- `/dev-check` -- 37-check structural validator (includes S12-S15 skill metadata checks)
+- `/dev-check` -- 10-check structural + cognitive load validator
 - `/dev-scan` -- Deep codebase analysis (**hybrid:** main agent scans, subagents synthesize articles)
-- `/dev-debrief` -- Tiered session capture with integrated review gate (L/Standard) and retro check (every 5 phases)
 
 ## Command Reference
 
@@ -109,7 +108,7 @@ Key companions:
 - Active knowledge spec: `~/.claude/skills/dev-wiki/active-knowledge-spec.md`
 - Working knowledge spec (partitioning): `~/.claude/skills/dev-wiki/working-knowledge-spec.md`
 - CLAUDE.md lifecycle: `~/.claude/skills/dev-wiki/claude-md-lifecycle.md`
-- Journey conventions: `~/.claude/skills/dev-wiki/journey-conventions.md`
+
 
 ## Cross-Package Integration
 

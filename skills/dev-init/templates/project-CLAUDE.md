@@ -2,7 +2,7 @@
 
 {{PROJECT_DESCRIPTION}}
 
-Project entry point loaded when Claude Code's CWD is in this repo. Composes with the global `~/.claude/CLAUDE.md` per [[wiki:claude-md-interaction-contract]] (project rules win for the same concern; different concerns layer additively). Kept ≤80 lines per [[wiki:harness-composition-playbook]] invariant #2.
+Project entry point loaded when Claude Code's CWD is in this repo. Composes with the global `~/.claude/CLAUDE.md` per the composition contract (project rules win for the same concern; different concerns layer additively). Kept ≤80 lines per the harness composition invariant.
 
 ## Identity
 
@@ -34,4 +34,4 @@ These files are written and pruned by skills; treat as machine-generated:
 
 ## Precedence
 
-When this file's content conflicts with `~/.claude/CLAUDE.md` on the same concern, this file wins (specificity rule, empirically verified — see [[wiki:claude-md-interaction-contract]] precedence test). When concerns are different, both apply.
+When this file's content conflicts with `~/.claude/CLAUDE.md` on the same concern, this file wins (specificity rule, empirically verified — see the composition contract precedence test). When concerns are different, both apply.

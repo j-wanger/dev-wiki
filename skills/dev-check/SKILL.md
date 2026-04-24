@@ -83,6 +83,12 @@ Severity: WARNING
 Read `$ROOT/.claude/rules/working-knowledge.md` (skip if absent). Count `- [uses:` lines. If >100, flag.
 Severity: WARNING
 
+### Cognitive Load Check
+
+**CL1: Per-invocation line count**
+For each skill dir in `~/.claude/skills/dev-{plan,debrief,init,scan,check,wiki}/`: count lines in SKILL.md + all companion .md files (`wc -l *.md`). Report total. Flag any skill exceeding 600 lines (lite-mode cognitive load threshold, informed by context degradation research).
+Severity: WARNING
+
 ### Diagnosis Output
 
 ```
